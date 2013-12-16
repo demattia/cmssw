@@ -20,6 +20,7 @@
 
 #include "RecoTracker/TkSeedGenerator/interface/SeedGeneratorFromRegionHits.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/QuadrupletSeedMerger.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 
 SeedGeneratorFromRegionHitsEDProducer::SeedGeneratorFromRegionHitsEDProducer(
@@ -42,25 +43,25 @@ SeedGeneratorFromRegionHitsEDProducer::SeedGeneratorFromRegionHitsEDProducer(
     theMerger_->setLayerListName( mergerPSet.getParameter<std::string>( "layerListName" ) );
   }
 
+  edm::ParameterSet regfactoryPSet = 
+      theConfig.getParameter<edm::ParameterSet>("RegionFactoryPSet");
+  std::string regfactoryName = regfactoryPSet.getParameter<std::string>("ComponentName");
+  theRegionProducer = TrackingRegionProducerFactory::get()->create(regfactoryName,regfactoryPSet, consumesCollector());
+
   produces<TrajectorySeedCollection>();
 }
 
 SeedGeneratorFromRegionHitsEDProducer::~SeedGeneratorFromRegionHitsEDProducer()
 {
+  delete theRegionProducer;
 }
 
 void SeedGeneratorFromRegionHitsEDProducer::endRun(edm::Run const&run, const edm::EventSetup& es) {
-  delete theRegionProducer;
   delete theGenerator;
 }
 
 void SeedGeneratorFromRegionHitsEDProducer::beginRun(edm::Run const&run, const edm::EventSetup& es)
 {
-  edm::ParameterSet regfactoryPSet = 
-      theConfig.getParameter<edm::ParameterSet>("RegionFactoryPSet");
-  std::string regfactoryName = regfactoryPSet.getParameter<std::string>("ComponentName");
-  theRegionProducer = TrackingRegionProducerFactory::get()->create(regfactoryName,regfactoryPSet);
-
   edm::ParameterSet hitsfactoryPSet = 
       theConfig.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet");
   std::string hitsfactoryName = hitsfactoryPSet.getParameter<std::string>("ComponentName");
@@ -79,7 +80,6 @@ void SeedGeneratorFromRegionHitsEDProducer::beginRun(edm::Run const&run, const e
   SeedCreator * aCreator = SeedCreatorFactory::get()->create( creatorName, creatorPSet);
 
   theGenerator = new SeedGeneratorFromRegionHits(hitsGenerator, aComparitor, aCreator); 
- 
 }
 
 void SeedGeneratorFromRegionHitsEDProducer::produce(edm::Event& ev, const edm::EventSetup& es)

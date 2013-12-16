@@ -1,6 +1,7 @@
 #include "FWCore/Framework/interface/EventPrincipal.h"
 
 #include "DataFormats/Common/interface/BasicHandle.h"
+#include "DataFormats/Common/interface/FunctorHandleExceptionFactory.h"
 #include "DataFormats/Provenance/interface/BranchIDList.h"
 #include "DataFormats/Provenance/interface/BranchIDListHelper.h"
 #include "DataFormats/Provenance/interface/BranchListIndex.h"
@@ -239,7 +240,7 @@ namespace edm {
     return streamID_.value();
   }
 
-  static void throwProductDeletedException(ProductID const& pid, edm::EventPrincipal::ConstProductPtr const phb) {
+  static void throwProductDeletedException(ProductID const& pid, edm::EventPrincipal::ConstProductHolderPtr const phb) {
     ProductDeletedException exception;
     exception<<"get by product ID: The product with given id: "<<pid
     <<"\ntype: "<<phb->productType()
@@ -252,12 +253,14 @@ namespace edm {
   BasicHandle
   EventPrincipal::getByProductID(ProductID const& pid) const {
     BranchID bid = pidToBid(pid);
-    ConstProductPtr const phb = getProductHolder(bid, true, false, nullptr);
+    ConstProductHolderPtr const phb = getProductHolder(bid, true, false, nullptr);
     if(phb == nullptr) {
-      boost::shared_ptr<cms::Exception> whyFailed(new Exception(errors::ProductNotFound, "InvalidID"));
-      *whyFailed
+      return BasicHandle(makeHandleExceptionFactory([pid]()->std::shared_ptr<cms::Exception> {
+        std::shared_ptr<cms::Exception> whyFailed(std::make_shared<Exception>(errors::ProductNotFound, "InvalidID"));
+        *whyFailed
         << "get by product ID: no product with given id: " << pid << "\n";
-      return BasicHandle(whyFailed);
+        return whyFailed;
+      }));
     }
 
     // Was this already deleted?
@@ -267,11 +270,13 @@ namespace edm {
     // Check for case where we tried on demand production and
     // it failed to produce the object
     if(phb->onDemand()) {
-      boost::shared_ptr<cms::Exception> whyFailed(new Exception(errors::ProductNotFound, "InvalidID"));
-      *whyFailed
+      return BasicHandle(makeHandleExceptionFactory([pid]()->std::shared_ptr<cms::Exception> {
+        std::shared_ptr<cms::Exception> whyFailed(std::make_shared<Exception>(errors::ProductNotFound, "InvalidID"));
+        *whyFailed
         << "get by product ID: no product with given id: " << pid << "\n"
         << "onDemand production failed to produce it.\n";
-      return BasicHandle(whyFailed);
+        return whyFailed;
+      }));
     }
     return BasicHandle(phb->productData());
   }
