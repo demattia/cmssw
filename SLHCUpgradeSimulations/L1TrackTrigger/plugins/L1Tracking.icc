@@ -152,7 +152,8 @@
 	if (hypot(stub.x(),stub.y())>60) sigmaz=1.44;  //HACK!!!
       }
 
-      L1TStub aStub(simtrackid,stub.diphi(),stub.diz(),layer,ladder,module,stub.x(),stub.y(),stub.z(),sigmax,sigmaz,stub.pt()*stub.ptsign());
+      //L1TStub aStub(simtrackid,stub.diphi(),stub.diz(),layer,ladder,module,stub.x(),stub.y(),stub.z(),sigmax,sigmaz,stub.pt()*stub.ptsign());
+      L1TStub aStub(simtrackid,stub.diphi(),stub.diz(),layer,ladder,module,stub.strip(),stub.x(),stub.y(),stub.z(),sigmax,sigmaz,stub.pt(),stub.bend());
 
       //cout << "layer ladder module:"<<layer<<" "<<ladder<<" "<<module
       //	   << " "<<aStub.r()<<" "<<aStub.phi()<<" "<<aStub.z()<<endl;
@@ -609,7 +610,7 @@
       allTracks.addTracks(L[0]->allTracks());
     }      
     
-    if(1){
+    if(0){ //not used in current firmware for demonstrator
       //tracklettimer.start();
       L[1]->findTracklets(L[2]);
       L[1]->findTracklets(B[0],70.0);
@@ -641,8 +642,8 @@
     if(1){
       //tracklettimer.start();
       L[2]->findTracklets(L[3]);
-      L[2]->findTracklets(B[0]);
-      L[2]->findTracklets(F[0]);
+      //L[2]->findTracklets(B[0]); //not used in firmware
+      //L[2]->findTracklets(F[0]); //not used in firmware
       //tracklettimer.stop();
       //matchtimer.start();
       L[2]->findMatches(L[0],phiWindowSF_,0.025,5.0);
@@ -667,7 +668,7 @@
       allTracks.addTracks(L[2]->allTracks());
     }
   
-    if(1){
+    if(0){ //not used in firmware
       //tracklettimer.start();
       L[3]->findTracklets(L[4]);
       L[3]->findTracklets(B[0]);
@@ -748,7 +749,7 @@
       allTracks.addTracks(F[0]->allTracks());
     }      
 
-    if(1){
+    if(0){ //not used in firmware
       //tracklettimer.start();
       F[1]->findTracklets(F[2]);
       //tracklettimer.stop();
@@ -792,7 +793,7 @@
       allTracks.addTracks(F[2]->allTracks());
     }
 
-    if(1){
+    if(0){ //not used in firmware
       //tracklettimer.start();
       F[3]->findTracklets(F[4]);
       //tracklettimer.stop();
@@ -836,7 +837,7 @@
       allTracks.addTracks(B[0]->allTracks());
     }      
 
-    if(1){
+    if(0){ //not used in firmware
       //tracklettimer.start();
       B[1]->findTracklets(B[2]);
       //tracklettimer.stop();
@@ -880,7 +881,7 @@
       allTracks.addTracks(B[2]->allTracks());
     }      
 
-    if(1){
+    if(0){ //not used in firmware
       //tracklettimer.start();
       B[3]->findTracklets(B[4]);
       //tracklettimer.stop();

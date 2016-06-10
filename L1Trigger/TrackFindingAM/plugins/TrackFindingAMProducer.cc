@@ -120,7 +120,7 @@ TrackFindingAMProducer::TrackFindingAMProducer( const edm::ParameterSet& iConfig
     }
   }  
 
-  m_pf = new PatternFinder( m_st.getSuperStripSize(), nThresh, &m_st, "", "" );
+  m_pf = new PatternFinder( nThresh, &m_st, "", "" );
 
   if(nMissingHits>-1)
   {
@@ -172,7 +172,7 @@ void TrackFindingAMProducer::produce( edm::Event& iEvent, const edm::EventSetup&
   int layer  = 0;
   int ladder = 0;
   int module = 0;
-  int n_active =  m_st.getAllSectors().at(0)->getNbLayers();
+  //  int n_active =  m_st.getAllSectors().at(0)->getNbLayers();
 
   /// STEP 1
   /// Loop over input stubs
@@ -191,11 +191,14 @@ void TrackFindingAMProducer::produce( edm::Event& iEvent, const edm::EventSetup&
   {
     for ( stubIter = inputIter->begin(); stubIter != inputIter->end(); ++stubIter )
     {
-      /// Increment the counter
+
+     /// Increment the counter
       j++;
 
       /// Make the Ref to be put in the Track
       edm::Ref< edmNew::DetSetVector< TTStub< Ref_PixelDigi_ > >, TTStub< Ref_PixelDigi_ > > tempStubRef = makeRefTo( TTStubHandle, stubIter );
+
+      if (tempStubRef->getTriggerDisplacement()==500 && nDebug==1)  continue; // Don't pass FE innef (under test)
 
       stubMap.insert( std::make_pair( j, tempStubRef ) );
 
@@ -206,20 +209,8 @@ void TrackFindingAMProducer::produce( edm::Event& iEvent, const edm::EventSetup&
 
       StackedTrackerDetId detIdStub( tempStubRef->getDetId() );
 
-      const GeomDetUnit* det0 = theStackedTracker->idToDetUnit( detIdStub, 0 );
-      const GeomDetUnit* det1 = theStackedTracker->idToDetUnit( detIdStub, 1 );
-
       /// Find pixel pitch and topology related information
-      const PixelGeomDetUnit* pix0 = dynamic_cast< const PixelGeomDetUnit* >( det0 );
-      const PixelGeomDetUnit* pix1 = dynamic_cast< const PixelGeomDetUnit* >( det1 );
-      const PixelTopology* top0    = dynamic_cast< const PixelTopology* >( &(pix0->specificTopology()) );
-      const PixelTopology* top1    = dynamic_cast< const PixelTopology* >( &(pix1->specificTopology()) );
-
-      /// Find the z-segment
-      int cols0   = top0->ncolumns();
-      int cols1   = top1->ncolumns();
-      int ratio   = cols0/cols1; /// This assumes the ratio is integer!
-      int segment = floor( mp0.y() / ratio );
+      int segment = floor( mp0.y() ); // Segment of the bottom clust
 
       // Here we rearrange the number in order to be compatible with the AM emulator
       if ( detIdStub.isBarrel() )
@@ -233,8 +224,6 @@ void TrackFindingAMProducer::produce( edm::Event& iEvent, const edm::EventSetup&
         layer  = 10+detIdStub.iZ()+abs((int)(detIdStub.iSide())-2)*7;
         ladder = detIdStub.iRing()-1;
         module = detIdStub.iPhi()-1;
-
-	//	std::cout << mp0.y() << " / " << cols0 << " / " << cols1 << " / " << segment << std::endl;
       }
 
       module = CMSPatternLayer::getModuleCode(layer,module);
@@ -243,27 +232,31 @@ void TrackFindingAMProducer::produce( edm::Event& iEvent, const edm::EventSetup&
       if ( module < 0 )  continue;
 
       ladder = CMSPatternLayer::getLadderCode(layer, ladder);
+      segment = CMSPatternLayer::getSegmentCode(layer, ladder, segment);
 
       float x    = posStub.x();
       float y    = posStub.y();
       float z    = posStub.z();
 
-      Hit* h = new Hit(layer,ladder, module, segment, mp0.x(), j, -1, 0, 0, 0, 0, x, y, z, 0, 0, 0);
-      m_hits.push_back(h);
+      Hit* h = new Hit(layer,ladder, module, segment, mp0.x(), j, -1, 0, 0, 0, 0, x, y, z, 0, 0, 0, tempStubRef->getTriggerDisplacement()-tempStubRef->getTriggerOffset());
+      if(m_st.getSector(*h)!=NULL)
+        m_hits.push_back(h);
+      else
+       delete(h);
     } /// End of loop over input stubs
   } /// End of loop over DetSetVector
 
   /// STEP 2
   /// PAssing the superstrips into the AM chip
-
-  std::vector< Sector* > patternsSectors = m_pf->find(m_hits); // AM PR is done here....
   if(nDebug==1)
-    m_pf->displaySuperstrips(m_hits); // display the supertrips of the event
+    m_pf->setVerboseMode(true); // display the supertrips of the event
+  std::vector< Sector* > patternsSectors = m_pf->find(m_hits); // AM PR is done here....
 
   /// STEP 3
   /// Collect the info and store the track seed stuff
 
   std::vector< Hit* > hits;
+  std::vector< char > layers_touched;
 
   std::vector< edm::Ref< edmNew::DetSetVector< TTStub< Ref_PixelDigi_ > >, TTStub< Ref_PixelDigi_ > > > tempVec;
 
@@ -274,7 +267,6 @@ void TrackFindingAMProducer::produce( edm::Event& iEvent, const edm::EventSetup&
     if ( pl.size() == 0 ) continue; // No patterns
 
     int secID = patternsSectors[i]->getOfficialID();
-
     //    std::cout<<"Found "<<pl.size()<<" patterns in sector " << secID<<std::endl;
     //    std::cout<<"containing "<<n_active<<" layers " << secID<<std::endl;
   
@@ -285,6 +277,31 @@ void TrackFindingAMProducer::produce( edm::Event& iEvent, const edm::EventSetup&
       hits.clear();
       hits = pl[j]->getHits();
 
+      int n_lay = pl[j]->getNbLayers() - pl[j]->getNbFakeSuperstrips(); 
+      bool is_there;
+
+      // Look how many layers have been hit.
+      layers_touched.clear();
+
+      for(unsigned k = 0; k < hits.size(); k++ )
+      {
+	is_there = false;
+	if (layers_touched.size()==0) 
+	{
+	  layers_touched.push_back( hits[k]->getLayer());
+	}
+	else
+	{	 
+	  for(unsigned l = 0; l < layers_touched.size(); l++ )
+	  {
+	    if (is_there) break;
+	    if (hits[k]->getLayer() == layers_touched.at(l)) is_there=true;
+	  } 
+
+	  if (!is_there) layers_touched.push_back( hits[k]->getLayer());
+        }
+      }
+
       /// Create the Seed in the form of a Track and store it in the output
       tempVec.clear();
 
@@ -294,7 +311,7 @@ void TrackFindingAMProducer::produce( edm::Event& iEvent, const edm::EventSetup&
 
       TTTrack< Ref_PixelDigi_ > tempTrack( tempVec );
       tempTrack.setSector( secID );
-      tempTrack.setWedge( n_active );
+      tempTrack.setWedge( n_lay - layers_touched.size() );
       tempTrack.setPOCA( GlobalPoint(0.,0.,0.),5);		
       TTTracksForOutput->push_back( tempTrack );
 

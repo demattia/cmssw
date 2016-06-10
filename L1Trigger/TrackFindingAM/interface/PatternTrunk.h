@@ -63,6 +63,11 @@ class PatternTrunk{
      \return The PT in GeV/c
   **/
   float getLDPatternPT();
+ /**
+     \brief Get the number of tracks that have created the low definition pattern
+     \return The number of tracks leading to this pattern
+  **/
+  int getLDPatternGrade() const;
   /**
      \brief Get the number of FD patterns
      \return The number of FD patterns stored in the PatternTrunk
@@ -71,17 +76,15 @@ class PatternTrunk{
 
   /**
      \brief Set the DC bits of the LD patterns. All FD patterns are removed.
-     \param r The number of DC bits used between FD and LD
+     \param r The number of DC bits used between FD and LD for each layer
   **/
-  void computeAdaptativePattern(short r);
+  void computeAdaptativePattern(vector<int> r);
 
   /**
      \brief Link the low definition patterns to the detector structure
      \param d The detector
-     \param sec The ladders in the sector
-     \param modules The modules in the sector (one vector per ladder)
   **/  
-  void link(Detector& d, const vector< vector<int> >& sec, const vector<map<int, vector<int> > >& modules);
+  void link(Detector& d);
 
 #ifdef IPNL_USE_CUDA
  /**
@@ -122,6 +125,17 @@ class PatternTrunk{
      \result True if the pattern is already in tha bank, false otherwise
    **/
   bool checkPattern(Pattern* hp);
+
+  /**
+     \brief Set the orderInChip information to the LD pattern
+     \param i The theoretical order in the chip
+   **/
+  void setOrderInChip(int i);
+  /**
+     \brief Get the orderInChip information of the LD pattern
+     \return The theoretical order in the chip
+   **/
+  int getOrderInChip() const;
 
  private:
   GradedPattern* lowDefPattern;

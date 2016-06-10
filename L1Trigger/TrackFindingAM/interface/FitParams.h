@@ -71,6 +71,7 @@ class FitParams{
   Track* getTrack(double* val);
   int getNbPrincipalTracks();
   int getNbMultiDimFitTracks();
+  bool eigenContainsNan();
 
   friend class boost::serialization::access;
   
@@ -91,8 +92,8 @@ class FitParams{
 	ar << transform[i][j];
       }
     }
+    ar << nb_multidimfit;
     if(nb_multidimfit>threshold){
-      ar << nb_multidimfit;
       ar << pt_fit_data;
       ar << phi0_fit_data;
       ar << d0_fit_data;
@@ -106,8 +107,14 @@ class FitParams{
   }
   
   template<class Archive> void load(Archive & ar, const unsigned int version){
+
+    for(int i=0;i<3*nb_layers;i++){
+      delete[] transform[i];
+    }
+    delete[] transform;
+
     ar >> nb_layers;
-    //init();
+    init();
     ar >> threshold;
     ar >> nb_principal;
     ar >> eigen;

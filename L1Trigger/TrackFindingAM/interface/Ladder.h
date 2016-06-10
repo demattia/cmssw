@@ -16,10 +16,11 @@ class Ladder{
   /**
      \brief Constructor
      \param nbMod Number of modules in the ladder
+     \param nbSeg Number of segments in the module
      \param segmentSize Number of strips in a segment
      \param sstripSize Number of strips in a super strip
   **/
-  Ladder(int nbMod, int segmentSize, int sstripSize);
+  Ladder(int nbMod, int nbSeg, int segmentSize, int sstripSize);
   /**
      \brief Destructor
   **/

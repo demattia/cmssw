@@ -3,8 +3,12 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <algorithm>
+#include <iomanip>
 #include <bitset>
 #include "PatternLayer.h"
+#include <stdexcept>
 
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
@@ -32,22 +36,13 @@ using namespace std;
 
 class CMSPatternLayer : public PatternLayer{
  private:
-  static const short MOD_START_BIT = 11;
-  static const short PHI_START_BIT = 7;
-  static const short STRIP_START_BIT = 1;
-  static const short SEG_START_BIT = 0;
-
-  static const short MOD_MASK = 0x1F;
-  static const short PHI_MASK = 0xF;
-  static const short STRIP_MASK = 0x3F;
-  static const short SEG_MASK = 0x1;
 
   short binaryToGray(short num);
   short grayToBinary(short gray);
 
   friend class boost::serialization::access;
   
-  template<class Archive> void save(Archive & ar, const unsigned int version) const//const boost::serialization::version_type& version) const 
+  template<class Archive> void save(Archive & ar, const unsigned int version) const
     {
       ar << boost::serialization::base_object<PatternLayer>(*this);
     }
@@ -55,6 +50,10 @@ class CMSPatternLayer : public PatternLayer{
   template<class Archive> void load(Archive & ar, const unsigned int version)
     {
       ar >> boost::serialization::base_object<PatternLayer>(*this);
+      if(version<2){
+	cout<<"This release does not support old PBK files. Please use up-to-date files or switch to an older release."<<endl;
+	exit(-1);
+      }
       if(version<1){
 	//Convert the strip value to gray code
 	char current_val = getStripCode();
@@ -72,9 +71,23 @@ class CMSPatternLayer : public PatternLayer{
   BOOST_SERIALIZATION_SPLIT_MEMBER()
 
  public:
+
+  static short MOD_START_BIT;
+  static short PHI_START_BIT;
+  static short STRIP_START_BIT;
+  static short SEG_START_BIT;
+
+  static short MOD_MASK;
+  static short PHI_MASK;
+  static short STRIP_MASK;
+  static short SEG_MASK;
+
+  static short OUTER_LAYER_SEG_DIVIDE;//Simplification factor on outer barrel layers segments (1:we use segment, 2:all values to 0)
+  static short INNER_LAYER_SEG_DIVIDE;//Simplification factor on inner barrel layers segments (1:we use segment, 2:all values to 0)
+
   CMSPatternLayer();
   CMSPatternLayer* clone();
-  vector<SuperStrip*> getSuperStrip(int l, const vector<int>& ladd, const map<int, vector<int> >& modules, Detector& d);
+  vector<SuperStrip*> getSuperStrip(int l, Detector& d);
   void getSuperStripCuda(int l, const vector<int>& ladd, const map<int, vector<int> >& modules, int layerID, unsigned int* v);
   
   /**
@@ -85,6 +98,20 @@ class CMSPatternLayer : public PatternLayer{
      \param seg The segment in the module (0 or 1)
   **/
   void setValues(short m, short phi, short strip, short seg);
+
+  /**
+     \brief Compute the superstrip value from the stub informations
+     \param layerID The ID of the stub's layer
+     \param module The value of the stub's module in the trigger tower
+     \param phi The value of the stub's ladder in the trigger tower
+     \param strip The value of the stub's strip
+     \param seg The value of the stub's segment
+     \param sstripSize The size of a superstrip in numbner of strips
+     \param isPS True if we are on a P/S module
+     \param fake True if you are building a fake superstrip
+   **/
+  void computeSuperstrip(short layerID, short module, short phi, short strip, short seg, int sstripSize, bool isPS, bool fake=0);
+
   /**
      \brief Returns a string representation of the PatternLayer
      \return A string describing the PatternLayer
@@ -97,15 +124,11 @@ class CMSPatternLayer : public PatternLayer{
   **/
   string toStringBinary();
   /**
-     \brief Returns a string representation of the PatternLayer, using binary values and in the correct AM05 order (strip position at the end).
-     \return A string describing the PatternLayer
-  **/
-  string toStringSuperstripBinary();
-  /**
      \brief Returns a string representation of the PatternLayer, using the encoding needed for a AM05 chip
+     \param tagLayer If true, set the bit 6 to 1 (used to distinguish layers in case of 2 layers on 1 bus)
      \return A string describing the PatternLayer
   **/
-  string toAM05Format();
+  string toAM05Format(bool tagLayer=false);
   /**
      \brief Returns the module's Z position
      \return The module's Z position
@@ -188,18 +211,27 @@ class CMSPatternLayer : public PatternLayer{
   **/
   static int getNbModules(int layerID, int ladderID);  
 
+  /**
+     \brief Convertion from CMSSW layer numbering (one id per layer/disk) to PRBF2 numbering (id depends on the layer AND the module type)
+     \param cms_layer The CMSSW layer ID (5 to 10 for barrel, 11 to 15 for first TEC and 18 to 22 for second TEC)
+     \param isPS True if the module is PS, False if 2S
+     \return The PRBF2 layer ID
+  **/
+  static int cmssw_layer_to_prbf2_layer(int cms_layer, bool isPS);
+
  /**
      \brief Check if the PatternLayer is a fake one (used on layers not crossed by the track)
      \return True if the PatternLayer is a placeholder
   **/  
   bool isFake();
 
-  /**
+  vector<int> getHDSuperstrips();  
+
+/**
      \brief Returns a map containing the valid ETA range for each layer
      \return For each layerID, gives the minimum and maximum ETA values
   **/
   static map<int, pair<float,float> > getLayerDefInEta();
-
 };
-BOOST_CLASS_VERSION(CMSPatternLayer, 1)
+BOOST_CLASS_VERSION(CMSPatternLayer, 2)
 #endif

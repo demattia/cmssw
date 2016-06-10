@@ -1,5 +1,16 @@
 #include "../interface/CMSPatternLayer.h"
 
+short CMSPatternLayer::MOD_START_BIT = 12;
+short CMSPatternLayer::PHI_START_BIT = 7;
+short CMSPatternLayer::STRIP_START_BIT = 0;
+short CMSPatternLayer::SEG_START_BIT = 11;
+short CMSPatternLayer::MOD_MASK = 0xF;
+short CMSPatternLayer::PHI_MASK = 0xF;
+short CMSPatternLayer::STRIP_MASK = 0x7F;
+short CMSPatternLayer::SEG_MASK = 0x1;
+short CMSPatternLayer::OUTER_LAYER_SEG_DIVIDE = 2;
+short CMSPatternLayer::INNER_LAYER_SEG_DIVIDE = 2;
+
 CMSPatternLayer::CMSPatternLayer():PatternLayer(){
 
 }
@@ -16,7 +27,7 @@ bool CMSPatternLayer::isFake(){
   return (getPhi()==15);
 }
 
-vector<SuperStrip*> CMSPatternLayer::getSuperStrip(int l, const vector<int>& ladd, const map<int, vector<int> >& modules, Detector& d){
+vector<SuperStrip*> CMSPatternLayer::getSuperStrip(int l, Detector& d){
   int nb_dc = getDCBitsNumber();
   vector<SuperStrip*> v;
 
@@ -37,14 +48,11 @@ vector<SuperStrip*> CMSPatternLayer::getSuperStrip(int l, const vector<int>& lad
   else{
     Layer* la = d.getLayerFromAbsolutePosition(l);
     if(la!=NULL){
-      int ladderID = ladd[getPhi()];//getPhi() is the position in the sector;ladd[getPhi()] gives the ID of the ladder
-      Ladder* patternLadder = la->getLadder(ladderID);
+      Ladder* patternLadder = la->getLadder(getPhi());
       if(patternLadder!=NULL){
-	map<int, vector<int> >::const_iterator iterator = modules.find(ladderID); // get the vector of module IDs for this ladder
-	int moduleID = iterator->second[getModule()];// getthe module ID from its position
-	Module* patternModule = patternLadder->getModule(moduleID);
+	Module* patternModule = patternLadder->getModule(la->isBarrel()?0:getModule());
 	if(patternModule!=NULL){
-	  Segment* patternSegment = patternModule->getSegment(getSegment());
+	  Segment* patternSegment = patternModule->getSegment(la->isBarrel()?getModule()*2+getSegment():getSegment());
 	  if(patternSegment!=NULL){
 	    int base_index = getStripCode()<<nb_dc;
 	    if(nb_dc>0){
@@ -61,10 +69,19 @@ vector<SuperStrip*> CMSPatternLayer::getSuperStrip(int l, const vector<int>& lad
 	    }
 	    return v;
 	  }
+	  else{
+	    cout<<"cannot find segment "<<getModule()<<endl;
+	  }
+	}
+	else{
+	  cout<<"cannot find module 0"<<endl;
 	}
       }
+      else{
+	cout<<"cannot find ladder 0"<<endl;
+      }
     }
-    cout<<"Error : can not link layer "<<l<<" ladder "<<ladd[getPhi()]<<" module "<<getModule()<<" segment "<<getSegment()<<" strip "<<getStrip()<<endl;
+    cout<<"Error : can not link layer "<<l<<endl;
   }
   return v;
 }
@@ -119,6 +136,41 @@ void CMSPatternLayer::setValues(short m, short phi, short strip, short seg){
     (seg&SEG_MASK)<<SEG_START_BIT;
 }
 
+void CMSPatternLayer::computeSuperstrip(short layerID, short module, short phi, short strip, short seg, int sstripSize, bool isPS, bool fake){
+  if(fake){
+    setValues(0, 15, 0, 0);
+    return;
+  }
+  
+  int superStrip = strip/sstripSize;
+  int segment = seg;
+  
+  /*
+    On P/S modules segment values are ranging from 0 to 31 -> we only want 0 or 1
+  */
+  if(isPS)
+    segment = segment/16;
+  
+  if(layerID<11){ //barrel
+    // mix modules and segments
+    int z = (module*2)+(1-segment);
+    // P/S modules are devided by 2 to get the same granularity as S/S modules
+    if(layerID>=5 && layerID<=7)
+      z = z/(2*INNER_LAYER_SEG_DIVIDE);
+    else if (layerID>10 && phi<=8)
+      z = z/(2*INNER_LAYER_SEG_DIVIDE);
+    else
+      z = z/OUTER_LAYER_SEG_DIVIDE;
+    
+    setValues(z/2,phi, superStrip, z%2);//store 4 bits on module and 1 bit on segment
+  }
+  else{//endcap
+    if(!isPS)
+      segment = 0;
+    setValues(module,phi, superStrip, segment);
+  }
+}
+
 short CMSPatternLayer::getModule(){
   int val = bits.to_ulong();
   short r = (val>>MOD_START_BIT)&MOD_MASK;
@@ -152,36 +204,14 @@ short CMSPatternLayer::getSegment(){
 
 string CMSPatternLayer::toString(){
   ostringstream oss;
-  oss<<"Ladder "<<getPhi()<<" Module "<<getModule()<<" Segment "<<getSegment()<<" strip "<<getStrip();
+  oss<<hex<<"0x"<<getIntValue()<<dec;
   if(dc_bits[0]!=3){
     oss<<" (";
     for(int i=0;i<DC_BITS;i++){
       if(dc_bits[i]==2)
 	oss<<"X";
-      else if(dc_bits[i]!=3)
-	oss<<(int)dc_bits[i];
-    }
-    oss<<")";
-  }
-  return oss.str();
-}
-
-string CMSPatternLayer::toStringSuperstripBinary(){
-  short seg = getSegment();
-  short sstrip = getStripCode();
-  int initialValue = getIntValue();
-  int moduleLadder = (initialValue>>PHI_START_BIT);//remove the superstrip and segment informations
-  int newValue = 0;
-  newValue |= (moduleLadder&0x1FF)<<PHI_START_BIT |
-    (seg&SEG_MASK)<<(PHI_START_BIT-1) |
-    (sstrip&STRIP_MASK)<<SEG_START_BIT;
-  ostringstream oss;
-  oss<<newValue;
-  if(dc_bits[0]!=3){
-    oss<<" (";
-    for(int i=0;i<DC_BITS;i++){
-      if(dc_bits[i]==2)
-	oss<<"X";
+      else if(dc_bits[i]==4)
+	oss<<"I";
       else if(dc_bits[i]!=3)
 	oss<<(int)dc_bits[i];
     }
@@ -198,6 +228,8 @@ string CMSPatternLayer::toStringBinary(){
     for(int i=0;i<DC_BITS;i++){
       if(dc_bits[i]==2)
 	oss<<"X";
+      else if(dc_bits[i]==4)
+	oss<<"I";
       else if(dc_bits[i]!=3)
 	oss<<(int)dc_bits[i];
     }
@@ -206,7 +238,7 @@ string CMSPatternLayer::toStringBinary(){
   return oss.str();
 }
 
-string CMSPatternLayer::toAM05Format(){
+string CMSPatternLayer::toAM05Format(bool tagLayer){
 
   /**
      The input superstrip is 16 bits long
@@ -215,24 +247,31 @@ string CMSPatternLayer::toAM05Format(){
   **/
   int nb_dc_bits = 0;
   int used_dc_bits = getDCBitsNumber();
+
+  if(isFake()){
+    dc_bits[0]=0;
+    dc_bits[1]=0;
+    dc_bits[2]=0;
+  }
+
   if(used_dc_bits<3)
     nb_dc_bits=2;
   else
     nb_dc_bits=used_dc_bits;
 
   //Default organization of bits (0 to 2 DC bits used)
-  short AM05_MOD_START_BIT = 13;
+  short AM05_MOD_START_BIT = 14;
   short AM05_PHI_START_BIT = 9;
-  short AM05_SEG_START_BIT = 8;
+  short AM05_SEG_START_BIT = 13;
   short AM05_STRIP_START_BIT = 4;
   short AM05_STRIP_DC0_BIT = 2;
   short AM05_STRIP_DC1_BIT = 0;
   short AM05_STRIP_DC2_BIT = 0;
 
-  short AM05_MOD_MASK = 0x1F;
+  short AM05_MOD_MASK = 0xF;
   short AM05_PHI_MASK = 0xF;
   short AM05_SEG_MASK = 0x1;
-  short AM05_STRIP_MASK = 0xF;//4 bits + 2 DC bits
+  short AM05_STRIP_MASK = 0x1F;//5 bits + 2 DC bits
   short AM05_STRIP_DC0_MASK = 0x3;
   short AM05_STRIP_DC1_MASK = 0x3;
   short AM05_STRIP_DC2_MASK = 0;
@@ -265,13 +304,7 @@ string CMSPatternLayer::toAM05Format(){
     else
       dcbit1_val=2;//10
 
-    // in case this is a fake superstrip, it must not be activable : we use the 11 value of the DC bits
-    if(isFake()){
-      dcbit0_val=3;//11
-      dcbit1_val=3;//11
-    }
-
-    //5 bits for Z + 4 bits for ladder + 1 bit for seg + 4 bits for sstrip + 2 bits for sstrips DC bit 0 + 2 bits for sstrips DC bit 1 = 18 bits
+    //4 bits for Z + 1 bit for seg + 4 bits for ladder + 5 bits for sstrip + 2 bits for sstrips DC bit 0 + 2 bits for sstrips DC bit 1 = 18 bits
     am_format |= (z&AM05_MOD_MASK)<<AM05_MOD_START_BIT |
       (ladder&AM05_PHI_MASK)<<AM05_PHI_START_BIT |
       (seg&AM05_SEG_MASK)<<AM05_SEG_START_BIT |
@@ -302,15 +335,11 @@ string CMSPatternLayer::toAM05Format(){
       break;
     case 1 : dcbit1_val=2;//10
       break;
+    case 4 : dcbit1_val=3;//11
+      break;
     }
     
-    // in case this is a fake superstrip, it must not be activable : we use the 11 value of the DC bits
-    if(isFake()){
-      dcbit0_val=3;//11
-      dcbit1_val=3;//11
-    }
-
-    //5 bits for Z + 4 bits for ladder + 1 bit for seg + 4 bits for sstrip + 2 bits for sstrips DC bit 0 + 2 bits for sstrips DC bit 1 = 18 bits
+    //4 bits for Z + 1 bit for seg + 4 bits for ladder + 5 bits for sstrip + 2 bits for sstrips DC bit 0 + 2 bits for sstrips DC bit 1 = 18 bits
     am_format |= (z&AM05_MOD_MASK)<<AM05_MOD_START_BIT |
       (ladder&AM05_PHI_MASK)<<AM05_PHI_START_BIT |
       (seg&AM05_SEG_MASK)<<AM05_SEG_START_BIT |
@@ -331,6 +360,8 @@ string CMSPatternLayer::toAM05Format(){
       break;
     case 1 : dcbit0_val=2;//10
       break;
+    case 4 : dcbit1_val=3;//11
+      break;
     }
 
     switch(dcbit1_val){
@@ -340,15 +371,11 @@ string CMSPatternLayer::toAM05Format(){
       break;
     case 1 : dcbit1_val=2;//10
       break;
+    case 4 : dcbit1_val=3;//11
+      break;
     }
 
-    // in case this is a fake superstrip, it must not be activable : we use the 11 value of the DC bits
-    if(isFake()){
-      dcbit0_val=3;//11
-      dcbit1_val=3;//11
-    }    
-
-    //5 bits for Z + 4 bits for ladder + 1 bit for seg + 4 bits for sstrip + 2 bits for sstrips DC bit 0 + 2 bits for sstrips DC bit 1 = 18 bits
+    //4 bits for Z + 1 bit for seg + 4 bits for ladder + 5 bits for sstrip + 2 bits for sstrips DC bit 0 + 2 bits for sstrips DC bit 1 = 18 bits
     am_format |= (z&AM05_MOD_MASK)<<AM05_MOD_START_BIT |
       (ladder&AM05_PHI_MASK)<<AM05_PHI_START_BIT |
       (seg&AM05_SEG_MASK)<<AM05_SEG_START_BIT |
@@ -358,18 +385,18 @@ string CMSPatternLayer::toAM05Format(){
   }
   else if(used_dc_bits==3){
 
-    AM05_MOD_START_BIT = 14;
+    AM05_MOD_START_BIT = 15;
     AM05_PHI_START_BIT = 10;
-    AM05_SEG_START_BIT = 9;
+    AM05_SEG_START_BIT = 14;
     AM05_STRIP_START_BIT = 6;
     AM05_STRIP_DC0_BIT = 4;
     AM05_STRIP_DC1_BIT = 2;
     AM05_STRIP_DC2_BIT = 0;
     
-    AM05_MOD_MASK = 0xF;
+    AM05_MOD_MASK = 0x7;
     AM05_PHI_MASK = 0xF;
     AM05_SEG_MASK = 0x1;
-    AM05_STRIP_MASK = 0x7;//3 bits + 3 DC bits
+    AM05_STRIP_MASK = 0xF;//4 bits + 3 DC bits
     AM05_STRIP_DC0_MASK = 0x3;
     AM05_STRIP_DC1_MASK = 0x3;
     AM05_STRIP_DC2_MASK = 0x3;
@@ -386,6 +413,8 @@ string CMSPatternLayer::toAM05Format(){
       break;
     case 1 : dcbit0_val=2;//10
       break;
+    case 4 : dcbit1_val=3;//11
+      break;
     }
 
     switch(dcbit1_val){
@@ -394,6 +423,8 @@ string CMSPatternLayer::toAM05Format(){
     case 0 : dcbit1_val=1;//01
       break;
     case 1 : dcbit1_val=2;//10
+      break;
+    case 4 : dcbit1_val=3;//11
       break;
     }
 
@@ -404,22 +435,17 @@ string CMSPatternLayer::toAM05Format(){
       break;
     case 1 : dcbit2_val=2;//10
       break;
+    case 4 : dcbit1_val=3;//11
+      break;
     }
     
-    //we are using 4 bits for the Z value so it must be below 16 (should be ok with official trigger towers)
-    if(z>15){
-      cout<<"The module value is too high ("<<z<<">15) : pattern can not be stored in an AM05 chip"<<endl;
+    //we are using 3 bits for the Z value so it must be below 8
+    if(z>7){
+      cout<<"The module value is too high ("<<z<<">7) : pattern can not be stored in an AM05 chip with this DC bit configuration."<<endl;
       exit(-1);
     }
 
-    // in case this is a fake superstrip, it must not be activable : we use the 11 value of the DC bits
-    if(isFake()){
-      dcbit0_val=3;//11
-      dcbit1_val=3;//11
-      dcbit2_val=3;//11
-    }
-
-    //4 bits for Z + 4 bits for ladder + 1 bit for seg + 3 bits for sstrip + 2 bits for sstrips DC bit 0 + 2 bits for sstrips DC bit 1 + 2 bits for sstrips DC bit 2 = 18 bits
+    //3 bits for Z + 1 bit for seg + 4 bits for ladder + 4 bits for sstrip + 2 bits for sstrips DC bit 0 + 2 bits for sstrips DC bit 1 + 2 bits for sstrips DC bit 2 = 18 bits
     am_format |= (z&AM05_MOD_MASK)<<AM05_MOD_START_BIT |
       (ladder&AM05_PHI_MASK)<<AM05_PHI_START_BIT |
       (seg&AM05_SEG_MASK)<<AM05_SEG_START_BIT |
@@ -428,8 +454,16 @@ string CMSPatternLayer::toAM05Format(){
       (dcbit1_val&AM05_STRIP_DC1_MASK)<<AM05_STRIP_DC1_BIT |
       (dcbit2_val&AM05_STRIP_DC2_MASK)<<AM05_STRIP_DC2_BIT;
   }
+
+  if(tagLayer){
+    if(used_dc_bits==3)
+      am_format |= 0x200;
+    else
+      am_format |= 0x100;
+  }
+
   ostringstream oss;
-  oss<<am_format<<" "<<nb_dc_bits;
+  oss<<hex<<"0x"<<std::setfill ('0') << std::setw (5)<<am_format<<" "<<nb_dc_bits;
   return oss.str();
 }
 
@@ -466,21 +500,15 @@ int CMSPatternLayer::getNbStripsInSegment(){
 }
 
 int CMSPatternLayer::getSegmentCode(int layerID, int ladderID, int segmentID){
-  if(layerID>7 && layerID<11)
-    return segmentID;
-  if(layerID>=5 && layerID<=7)
-    return segmentID/16;
-  if(ladderID<=8)
-    return segmentID/16;
   return segmentID;
 }
 
 
 int CMSPatternLayer::getModuleCode(int layerID, int moduleID){
   switch(layerID){
-  case 5 : return (moduleID/2);
-  case 6 : return (moduleID/2);
-  case 7 : return (moduleID/2);
+  case 5 : return (moduleID);
+  case 6 : return (moduleID);
+  case 7 : return (moduleID);
   case 8 : return moduleID;
   case 9 : return moduleID;
   case 10 : return moduleID;
@@ -557,4 +585,43 @@ map<int, pair<float,float> > CMSPatternLayer::getLayerDefInEta(){
   eta[21]=pair<float,float>(-2.5,-1.49);
   eta[22]=pair<float,float>(-2.5,-1.65);
   return eta;
+}
+
+vector<int> CMSPatternLayer::getHDSuperstrips(){
+  vector<int> array;
+  int nb_dc = getDCBitsNumber();
+  int base_index = getStripCode()<<nb_dc;
+  if(nb_dc>0){
+    vector<short> positions=getPositionsFromDC();
+    for(unsigned int i=0;i<positions.size();i++){
+      int index = base_index | positions[i];
+      array.push_back(grayToBinary(index));
+    }
+  }
+  else{
+    array.push_back(grayToBinary(base_index));
+  }
+  return array;
+}
+
+int CMSPatternLayer::cmssw_layer_to_prbf2_layer(int cms_layer, bool isPS){
+  int layer_code = -1;
+  if(isPS){
+    if(cms_layer<11)
+      layer_code = cms_layer-5;
+    else{
+      if(cms_layer>15)
+	cms_layer=cms_layer-7;
+      layer_code = cms_layer-8;
+    }
+  }else{
+    if(cms_layer<11)
+      layer_code = cms_layer;
+    else{
+      if(cms_layer>15)
+	cms_layer=cms_layer-7;
+      layer_code = cms_layer;
+    }
+  }
+  return layer_code;
 }

@@ -16,7 +16,7 @@ class Segment{
  public:
   /**
      \brief Constructor
-     \param stripNumber Total number of strips in a segment (should be 1024 for CMS external layers)
+     \param stripNumber Total number of strips in a segment
      \param sstripSize Size of a super strip (16,32,64,128,256,1024)
   **/
   Segment(int stripNumber, int sstripSize);

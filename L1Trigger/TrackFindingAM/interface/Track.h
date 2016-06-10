@@ -11,6 +11,7 @@ using namespace std;
 class Track{
 
  private:
+  double charge;
   double curve;
   double d0;
   double phi0;
@@ -18,6 +19,7 @@ class Track{
   double z0;
   double w_xy;
   double w_rz;
+  double chi2;
   vector<int> stub_ids;
 
  public:
@@ -32,15 +34,27 @@ class Track{
      \param p The PHI0 of the track
      \param p_a The Eta0 of the track
      \param p_b The Z0 of the track
-     \param w_xy The weight of the XY-retina maximum
-     \param w_rz The weight of the RZ-retina maximum
+     \param cg The charge of the track
+     \param Wxy The weight of the XY-retina maximum
+     \param Wrz The weight of the RZ-retina maximum
+     \param chi The chi2 parameter of the track
   **/
-  Track(double c, double d, double p, double p_a, double p_b, double Wxy=-1., double Wrz=-1.);
+  Track(double c, double d, double p, double p_a, double p_b, double cg=0., double Wxy=-1., double Wrz=-1., double chi=-1);
   /**
      \brief Copy Constructor
   **/
   Track(const Track&);
 
+  /**
+     \brief Set the charge of the track
+     \param cg The charge of the track
+  **/
+  void setCharge(double cg);
+  /**
+     \brief Get the charge of the track estimated from Fit Module
+     \return The charge of the track
+  **/
+  double getCharge();
   /**
      \brief Set the PT of the track
      \param p The PT of the track
@@ -76,6 +90,11 @@ class Track{
      \param Wrz The weight of the RZ-retina maximum
   **/
   void setWrz(double Wrz);
+ /**
+     \brief Set the Chi2 of the track
+     \param c The Chi2 value
+  **/
+  void setChi2(double c);
 
   /**
      \brief Add a stub to the list of stubs used to create the track
@@ -128,6 +147,11 @@ class Track{
      \return The weight of the RZ-retina maximum
   **/
   double getWrz();
+  /**
+     \brief Get the Chi2 value
+     \return The Chi2 value of the track
+  **/
+  double getChi2();
 
 };
 #endif

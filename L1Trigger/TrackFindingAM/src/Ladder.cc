@@ -1,8 +1,8 @@
 #include "../interface/Ladder.h"
 
-Ladder::Ladder(int nbMod, int segmentSize, int sstripSize){
+Ladder::Ladder(int nbMod, int nbSeg, int segmentSize, int sstripSize){
   for(int i=0;i<nbMod;i++){
-    Module* m = new Module(segmentSize, sstripSize);
+    Module* m = new Module(nbSeg, segmentSize, sstripSize);
     modules.push_back(m);
   }
 }

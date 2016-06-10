@@ -4,6 +4,7 @@ from Configuration.StandardSequences.MagneticField_cff import *
 from L1Trigger.TrackFindingAM.L1AMTrack_cfi import *
 from SimTracker.TrackTriggerAssociation.TTStubAssociation_cfi import * 
 from SimTracker.TrackTriggerAssociation.TTClusterAssociation_cfi import *
+from SimTracker.TrackTriggerAssociation.TTTrackAssociation_cfi import *
 import FWCore.ParameterSet.Config as cms
 
 
@@ -28,23 +29,44 @@ TTPatternsFromStubs   = cms.Sequence(TTPatternsFromStub)
 TTPatternsFromStubswStubs   = cms.Sequence(TTPatternsFromStub*MergePROutput*TTStubAssociatorFromPixelDigis)
 
 ############################################
-# STEP 2: Hough transform fit
+# STEP 2: TC builder 
 ############################################
 
 # The simple sequence, creates only a track container
 # used in principle only for debugging purposes
 #
-TTTracksFromPatterns  = cms.Sequence(TTTracksFromPattern)
+
+
+
+TTTCsFromPatterns  = cms.Sequence(TTTCsFromPattern)
 
 
 # The sequence. Note that we call the Merge plugins because the filtered containers are created
 # here. We just merge one branch...
 
-TTTracksFromPatternswStubs   = cms.Sequence(TTTracksFromPattern*MergeFITOutput*TTStubAssociatorFromPixelDigis)
-
+TTTCsFromPatternswStubs   = cms.Sequence(TTTCsFromPattern*MergeTCOutput*MergeTCOutputb*TTStubAssociatorFromPixelDigis*TTTrackAssociatorFromPixelDigis)
 
 ############################################
-# STEP 3: MERGE PR outputs
+# STEP 3: PCA fit 
+############################################
+
+# The simple sequence, creates only a track container
+# used in principle only for debugging purposes
+#
+
+#TTTrackAssociatorFromPixelDigis.TTTracks = cms.VInputTag( cms.InputTag("MergeFITOutput", "AML1Tracks"))
+
+TTTracksFromTCs  = cms.Sequence(TTTracksTAMUFromTC)
+
+
+# The sequence. Note that we call the Merge plugins because the filtered containers are created
+# here. We just merge one branch...
+
+#TTTracksFromTCswStubs   = cms.Sequence(TTTracksINFNFromTC*MergeFITOutput*TTStubAssociatorFromPixelDigis*TTTrackAssociatorFromPixelDigis)
+TTTracksFromTCswStubs   = cms.Sequence(TTTracksTAMUFromTC*MergeFITOutput*TTStubAssociatorFromPixelDigis*TTTrackAssociatorFromPixelDigis)
+
+############################################
+# STEP 4: MERGE PR outputs
 ############################################
 
 # This sequence is used mainly the multi-bank merging process, please note that the filtered cluster container is

@@ -3,108 +3,32 @@
 # This script is the main interface for pattern recognition on
 # CMSSW files.
 #
-# It is called by AMPR_parallel.csh
+# It is called by AMPR_batch.sh
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # You're not supposed to touch anything here
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #
-# Case 1: CMSSW pattern recognition on a given bank
+# Case 1: CMSSW AMPR and merging of the files 
 #
-# Use and customize the script AMPR_base.py
-#
-
-
-if [ ${1} = "PR" ]; then
-
-    INPUT=${2}                # The input file with full address
-    BK=${3}                   # The pbk file with full address
-    OUTPUT=${4}               # Output file name 
-    OUTPUTFULL=${7}/${4}      # The output file with full address
-    START=${5}                # The first event to process in the input file
-    STOP=${6}                 # The last event to process in the input file
-    CMSSW_PROJECT_SRC=${8}    # The CMSSW project release dir
-    SECBK=${9}                # The bank number in the directory (for branch name)
-    GT=${10}                  # The global tag
-    SEC=${11}                 # The sector number (default is 6x8 config: 48 sectors)
-    INTMP=${12}               # The directory where CMSSW will ran
- 
-
-    # Here we decide which threshold we shall use for a given sector
-    # In the future, threshold info will be included in the bank name
-    #
-    # Current default is 4 for hybrid sectors 
-
-    thresh=4
-    nmiss=1
-
-    # First we decide the threshold to apply (5 for barrel sectors only)
-
-    if [[ $SEC -ge 16 && $SEC -le 31 ]]; then 
-	thresh=5
-	nmiss=-1
-    fi
-
-    #
-    # Setting up environment variables
-    #   
-
-    cd $CMSSW_PROJECT_SRC
-    export SCRAM_ARCH=slc6_amd64_gcc472
-    eval `scramv1 runtime -sh`   
-
-    cd $INTMP
-    TOP=$PWD
-
-    #
-    # And we tweak the python generation script according to our needs
-    #  
-
-    cd $TOP
-    cp $CMSSW_PROJECT_SRC/src/L1Trigger/TrackFindingAM/test/batch/base/AMPR_base.py BH_dummy_${SECBK}_${OUTPUT}.py 
-
-    # Finally the script is modified according to the requests
-
-    echo "Threshold set to ",$thresh   
- 
-    sed "s/NEVTS/$STOP/"                                   -i BH_dummy_${SECBK}_${OUTPUT}.py
-    sed "s/NSKIP/$START/"                                  -i BH_dummy_${SECBK}_${OUTPUT}.py
-    sed "s#INPUTFILENAME#file:$INPUT#"                     -i BH_dummy_${SECBK}_${OUTPUT}.py
-    sed "s#OUTPUTFILENAME#$OUTPUT#"                        -i BH_dummy_${SECBK}_${OUTPUT}.py
-    sed "s#BANKFILENAME#$BK#"                              -i BH_dummy_${SECBK}_${OUTPUT}.py
-    sed "s/MYGLOBALTAG/$GT/"                               -i BH_dummy_${SECBK}_${OUTPUT}.py
-    sed "s/THRESHOLD/$thresh/"                             -i BH_dummy_${SECBK}_${OUTPUT}.py
-    sed "s/NBMISSHIT/$nmiss/"                              -i BH_dummy_${SECBK}_${OUTPUT}.py
-    sed "s/PATTCONT/AML1Patternsb$SEC/"                    -i BH_dummy_${SECBK}_${OUTPUT}.py
-
-    cmsRun BH_dummy_${SECBK}_${OUTPUT}.py 
-
-    rm BH_dummy_${SECBK}_${OUTPUT}.py 
-
-    # Store the data in the temporary directory
-    #  
-
-    mv $TOP/$OUTPUT $OUTPUTFULL
-
-fi
-
-#
-# Case 2: CMSSW merging of the files 
-#
-# Use and customize the script AMPR_MERGER_base.py and AM_FINAL_MERGER_base.py
+# Use and customize the script AMPR_base.py and AM_FINAL_MERGER_base.py
 #
 
-if [ ${1} = "MERGE" ]; then
+if [ ${1} = "PRMERGE" ]; then
 
     TAG=${2}                      # The tag of the files we merge (***_START_STOP.root) 
-    INPUTDIR=${3}                 # Input/Output dirs (lcg friendly) 
-    INPUTROOTDIR=${4}             # Input/Output dirs (ROOT friendly) 
+    INPUTDIR=${3}                 # Input/Output dirs (xrootd friendly) 
+    INPUTFILE=${4}                # Input file (on xrootd) 
     OUTPUTFILE="MERGED_"${5}$TAG  # Name of the output file 
     CMSSW_PROJECT_SRC=${6}        # The CMSSW project release dir
     GT=${7}                       # The global tag
     FNAME=${8}                    # A tag to enable parallel processing
-    INTMP=${9}                    # 
+    INTMP=$PWD/${9}               # 
+    BANKDIR=${10}                 # 
+    START=${11}                   # The first event to process in the input file
+    STOP=${12}                    # The last event to process in the input file
+    OUTTMP=$PWD/${13}             # 
 
     #
     # Setting up environment variables
@@ -114,61 +38,95 @@ if [ ${1} = "MERGE" ]; then
     export SCRAM_ARCH=slc6_amd64_gcc472
     eval `scramv1 runtime -sh`   
  
+    mkdir $INTMP
+    mkdir $OUTTMP
+
     cd $INTMP
     TOP=$PWD
 
     cd $TOP
 
-    rm temp_$FNAME
+    xrdcp $INPUTDIR/$INPUTFILE .
+    rm temp_$INPUTFILE
 
-    compteur=0
+    sec=0
+    sec2=0
+    OUTS1=${5}$TAG
 
-    for ll in `\ls $INPUTDIR | grep $TAG | grep ${5}`	
+    for ll in `\ls $BANKDIR | grep sec`	
     do
 
-      l=`basename $ll`
+       # By default, for CMSSW, we loop over all available bank in the directory provided
 
-      echo $l
+       sec2=$(( $sec - 1))
+       SECNUM=`echo $ll | sed s/^.*sec// | cut -d_ -f1` 
 
-      SECNUM=`echo $l | sed s/^.*sec// | cut -d_ -f1` 
 
-      echo "cms.InputTag(\"TTPatternsFromStub\", \"AML1Patternsb"${SECNUM}"\")" >> temp_$FNAME
+       # Here we decide which threshold we shall use for a given sector
+       # In the future, threshold info will be included in the bank name
+       #
+       # Current default is 4 for hybrid sectors 
 
-      echo $SECNUM,$l
+       thresh=4
+       nmiss=1
 
-      compteur2=$(( $compteur + 1))
+       # First we decide the threshold to apply (5 for barrel sectors only)
 
-      cp $CMSSW_PROJECT_SRC/src/L1Trigger/TrackFindingAM/test/batch/base/AMPR_MERGER_base.py BH_dummy_${FNAME}.py 
+       if [[ $SECNUM -ge 16 && $SECNUM -le 31 ]]; then 
+	   thresh=5
+	   nmiss=-1
+       fi
 
-      sed "s#OUTPUTFILENAME#merge_${compteur2}_${FNAME}.root#"        -i BH_dummy_${FNAME}.py
+       echo "cms.InputTag(\"TTPatternsFromStub\", \"AML1Patternsb"${SECNUM}"\")" >> temp_$FNAME
 
-      if [ $compteur = 0 ]; then # Special treatment for the first merging
+       cp $CMSSW_PROJECT_SRC/src/L1Trigger/TrackFindingAM/test/batch_new/base/AMPR_base.py BH_dummy_${OUTS1}_${SECNUM}.py
 
-	  sed "s#FILE1#file:$INPUTROOTDIR/$l#"                        -i BH_dummy_${FNAME}.py
-	  sed "s#FILE2#file:$INPUTROOTDIR/$l#"                        -i BH_dummy_${FNAME}.py
+       sed "s/NEVTS/$STOP/"                                   -i BH_dummy_${OUTS1}_${SECNUM}.py
+       sed "s/NSKIP/$START/"                                  -i BH_dummy_${OUTS1}_${SECNUM}.py
+       sed "s#BANKFILENAME#$BANKDIR/$ll#"                     -i BH_dummy_${OUTS1}_${SECNUM}.py
+       sed "s/MYGLOBALTAG/$GT/"                               -i BH_dummy_${OUTS1}_${SECNUM}.py
+       sed "s/THRESHOLD/$thresh/"                             -i BH_dummy_${OUTS1}_${SECNUM}.py
+       sed "s/NBMISSHIT/$nmiss/"                              -i BH_dummy_${OUTS1}_${SECNUM}.py
+       sed "s/PATTCONT/AML1Patternsb$SECNUM/"                 -i BH_dummy_${OUTS1}_${SECNUM}.py
+       sed "s/AMPRBASENUM/AMPRBASE$SECNUM/"                   -i BH_dummy_${OUTS1}_${SECNUM}.py
+       sed "s#OUTPUTFILENAME#merge_${sec}_${OUTS1}#"          -i BH_dummy_${OUTS1}_${SECNUM}.py
 
-      else # Normal case
+       if [ $sec = 0 ]; then # Special treatment for the first merging
 
-	  sed "s#FILE1#file:merge_${compteur}_${FNAME}.root#"         -i BH_dummy_${FNAME}.py
-	  sed "s#FILE2#file:$INPUTROOTDIR/$l#"                        -i BH_dummy_${FNAME}.py
+	   sed "s#INPUTFILENAME#file:$INPUTFILE#"             -i BH_dummy_${OUTS1}_${SECNUM}.py
 
-      fi
-      
-      # Do the merging and remove the previous file 
-      cmsRun BH_dummy_${FNAME}.py
-      rm merge_${compteur}_${FNAME}.root
-      compteur=$(( $compteur + 1))
+       else # Normal case
+
+	   sed "s#INPUTFILENAME#file:merge_${sec2}_${OUTS1}#" -i BH_dummy_${OUTS1}_${SECNUM}.py
+
+       fi
+
+       cmsRun BH_dummy_${OUTS1}_${SECNUM}.py
+
+       if [ $sec = 0 ]; then # Special treatment for the first merging
+
+	   rm $INPUTFILE
+
+       else # Normal case
+
+	   rm merge_${sec2}_${OUTS1}
+
+       fi
+       
+       rm BH_dummy_${OUTS1}_${SECNUM}.py
+
+       sec=$(( $sec + 1))
 
     done
 
-    rm BH_dummy_${FNAME}.py
+    sec=$(( $sec - 1))
 
     # The first merging step is done, we now have to merge the branches 
 
-    cp $CMSSW_PROJECT_SRC/src/L1Trigger/TrackFindingAM/test/batch/base/AMPR_FINAL_MERGER_base.py BH_dummy_${FNAME}.py 
+    cp $CMSSW_PROJECT_SRC/src/L1Trigger/TrackFindingAM/test/batch_new/base/AMPR_FINAL_MERGER_base.py BH_dummy_${FNAME}.py 
 
     sed "s#OUTPUTFILENAME#$OUTPUTFILE#"                          -i BH_dummy_${FNAME}.py
-    sed "s#INPUTFILENAME#file:merge_${compteur}_${FNAME}.root#"  -i BH_dummy_${FNAME}.py
+    sed "s#INPUTFILENAME#file:merge_${sec}_${OUTS1}#"            -i BH_dummy_${FNAME}.py
     sed "s/MYGLOBALTAG/$GT/"                                     -i BH_dummy_${FNAME}.py
 
     branchlist=`cat temp_${FNAME} | tr '\n' ','`
@@ -180,12 +138,12 @@ if [ ${1} = "MERGE" ]; then
     cmsRun BH_dummy_${FNAME}.py
 
     rm BH_dummy_${FNAME}.py
-    rm merge_${compteur}_${FNAME}.root
+    rm merge_${sec}_${OUTS1}
 
     # Recover the data
     #
   
-    OUTPUTFULL=$INPUTDIR/$OUTPUTFILE
+    OUTPUTFULL=$OUTTMP/$OUTPUTFILE
 
     echo $OUTPUTFULL
 
@@ -207,12 +165,12 @@ if [ ${1} = "FINAL" ]; then
     echo "Doing the final merging"
 
     TAG=${2} 
-    INPUTDIR=${3}  
-    INPUTROOTDIR=${4}  
+    INPUTDIR=$PWD/${3}  
+    INPUTROOTDIR=$PWD/${4}  
     OUTPUTFILE=${5}  
     CMSSW_PROJECT_SRC=${6}
     FNAME=${7}               # A tag to enable parallel processing
-    INTMP=${8}               # 
+    INTMP=$PWD/${8}          # 
 
     #
     # Setting up environment variables
@@ -230,6 +188,8 @@ if [ ${1} = "FINAL" ]; then
     rm list_${FNAME}.txt
 
     nfiles=`\ls $INPUTDIR | grep $TAG | wc -l` 
+
+    echo $INPUTDIR
 	
     for ll in `\ls $INPUTDIR | grep $TAG`	
     do
@@ -275,7 +235,7 @@ if [ ${1} = "FIT" ]; then
 
     echo "Doing the fit"
 
-    INPUT=${2}                # The input xrootd file name and address
+    INPUT=$PWD/${2}           # The input xrootd file name and address
     OUTPUT=${3}               # Output file name 
     OUTPUTE=${4}              # Output extracted file name 
     NEVT=${5}                 # #evts/file
@@ -283,7 +243,7 @@ if [ ${1} = "FIT" ]; then
     CMSSW_PROJECT_SRC=${7}    # The CMSSW project release dir
     GT=${8}                   # The global tag
     FNAME=${9}                # A tag to enable parallel processing
-    INTMP=${10}               # 
+    INTMP=$PWD/${10}          # 
 
     INFILE=`basename $INPUT`
     echo $INPUT,$INFILE
@@ -307,7 +267,7 @@ if [ ${1} = "FIT" ]; then
     #  
 
     cd $TOP
-    cp $CMSSW_PROJECT_SRC/src/L1Trigger/TrackFindingAM/test/batch/base/AMFIT_base.py BH_dummy_${FNAME}.py 
+    cp $CMSSW_PROJECT_SRC/src/L1Trigger/TrackFindingAM/test/batch_new/base/AMFIT_base.py BH_dummy_${FNAME}.py 
 
     # Finally the script is modified according to the requests
     

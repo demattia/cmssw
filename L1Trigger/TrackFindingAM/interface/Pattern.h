@@ -60,7 +60,7 @@ class Pattern{
      \param sec The ladders in the sector
      \param modules The modules in the sector (one vector per ladder)
   **/
-  void link(Detector& d, const vector< vector<int> >& sec, const vector<map<int, vector<int> > >& modules);
+  void link(Detector& d);
 #ifdef IPNL_USE_CUDA
   /**
      \brief Create links between patterns and detector on the device
@@ -124,6 +124,18 @@ class Pattern{
   int getNbFakeSuperstrips();
 
   /**
+     \brief Set the order of the pattern in the chip
+     \param i The index of the pattern in a theoretical chip
+  **/
+  void setOrderInChip(int i);
+
+  /**
+     \brief Get the index of the pattern in a theoretical chip
+     \return The value
+  **/
+  int getOrderInChip() const;
+
+  /**
      \brief Allows to display a Pattern as a string
   **/
   friend ostream& operator<<(ostream& out, const Pattern& s);
@@ -132,6 +144,7 @@ class Pattern{
   int nb_layer;
   SuperStrip*** strips;
   char* nb_strips;
+  int order_in_chip;// theoretical address in the AM chip
   bool nbFakeSSKnown;// used to store the number of fake SS
   char nbFakeSS; // used to store the number of fake SS (avoids re-computing)
   vector<PatternLayer*> layer_strips;
@@ -141,11 +154,16 @@ class Pattern{
   template<class Archive> void save(Archive & ar, const unsigned int version) const{
     ar << nb_layer;
     ar << layer_strips;
+    ar << order_in_chip;
   }
   
   template<class Archive> void load(Archive & ar, const unsigned int version){
     ar >> nb_layer;
     ar >> layer_strips; 
+    if(version>0)
+      ar >> order_in_chip;
+    else
+      order_in_chip=-1;
     strips=NULL;
     nb_strips=NULL;
   }
@@ -153,4 +171,5 @@ class Pattern{
   BOOST_SERIALIZATION_SPLIT_MEMBER()
 
 };
+BOOST_CLASS_VERSION(Pattern, 1)
 #endif
