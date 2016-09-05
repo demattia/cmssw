@@ -2,7 +2,7 @@
 // Created by Marco De Mattia on 7/11/15.
 //
 
-#include "../interface/BuildTestFunctions.h"
+#include "L1Trigger/TrackFindingAM/interface/BuildTestFunctions.h"
 
 
 void updateMean(std::unordered_map<unsigned long, std::pair<int, std::vector<double> > > & mean,
@@ -33,12 +33,9 @@ bool readMean(const std::string & dirName, const std::string & fileName, const u
       std::getline(inputFile, line);
       std::stringstream sline(line);
       double meanValue;
-//      std::cout << "mean R = " << std::endl;
       while (sline >> meanValue) {
-//        std::cout << meanR << " ";
         mean[combinationIndex].push_back(meanValue);
       }
-//      std::cout << std::endl;
     }
     else {
       return false;
@@ -59,11 +56,7 @@ void initializeVariablesTransformations(const std::vector<std::string> & inputVa
 {
   std::string preEstimateChargeOverPtFileName(preEstimateChargeOverPtDirName+"/matrixVD_"+std::to_string(combinationIndex)+"_pre_chargeOverPt.txt");
   std::string preEstimateCotThetaFileName(preEstimateCotThetaDirName+"/matrixVD_"+std::to_string(combinationIndex)+"_pre_cotTheta.txt");
-  std::string preEstimateTgThetaDirName(preEstimateCotThetaDirName);
-  int length = preEstimateTgThetaDirName.length();
-  // Remove trailing "/" if any
-  if (length > 1 && preEstimateTgThetaDirName[length-1] == '/') preEstimateTgThetaDirName = preEstimateTgThetaDirName.substr(0, length - 1);
-  std::string preEstimateTgThetaFileName = preEstimateTgThetaDirName+"_tgTheta/matrixVD_"+std::to_string(combinationIndex)+"_pre_tgTheta.txt";
+  std::string preEstimateTgThetaFileName(preEstimateCotThetaDirName+"/matrixVD_"+std::to_string(combinationIndex)+"_pre_tgTheta.txt");
 
   auto it = variablesTransformations.find(combinationIndex);
   if (it == variablesTransformations.end()) {
@@ -91,6 +84,41 @@ void initializeVariablesTransformations(const std::vector<std::string> & inputVa
                                                                                        preEstimateChargeOverPtFileName,
                                                                                        preEstimateTgThetaFileName,
                                                                                        meanRadius));
+      }
+      else if (varName == "CorrectedPhiFirstOrderExtrapolatedRFirstOrderNonRadialStripCorrectionLookup") {
+        variablesTransformations[combinationIndex].push_back(
+            std::make_shared<TransformCorrectedPhiFirstOrderExtrapolatedRFirstOrderNonRadialStripCorrectionLookup>(varName,
+                                                                                                                    preEstimateChargeOverPtFileName,
+                                                                                                                    preEstimateTgThetaFileName,
+                                                                                                                    meanRadius));
+      }
+      else if (varName == "CorrectedPhiFirstOrderExtrapolatedRSecondOrderNonRadialStripCorrectionLookup") {
+        variablesTransformations[combinationIndex].push_back(
+            std::make_shared<TransformCorrectedPhiFirstOrderExtrapolatedRSecondOrderNonRadialStripCorrectionLookup>(varName,
+                                                                                                                   preEstimateChargeOverPtFileName,
+                                                                                                                   preEstimateTgThetaFileName,
+                                                                                                                   meanRadius));
+      }
+      else if (varName == "CorrectedPhiSecondOrderExtrapolatedRFirstOrderNonRadialStripCorrectionLookup") {
+        variablesTransformations[combinationIndex].push_back(
+            std::make_shared<TransformCorrectedPhiSecondOrderExtrapolatedRFirstOrderNonRadialStripCorrectionLookup>(varName,
+                                                                                                                    preEstimateChargeOverPtFileName,
+                                                                                                                    preEstimateTgThetaFileName,
+                                                                                                                    meanRadius));
+      }
+      else if (varName == "TransformCorrectedPhiSecondOrderExtrapolatedRFirstOrderNonRadialStripCorrectionLookupNoExtRInCoordinatesCorrections") {
+        variablesTransformations[combinationIndex].push_back(
+            std::make_shared<TransformCorrectedPhiSecondOrderExtrapolatedRFirstOrderNonRadialStripCorrectionLookupNoExtRInCoordinatesCorrections>(varName,
+                                                                                                                                                  preEstimateChargeOverPtFileName,
+                                                                                                                                                  preEstimateTgThetaFileName,
+                                                                                                                                                  meanRadius));
+      }
+      else if (varName == "TransformCorrectedPhiFirstOrderExtrapolatedRFirstOrderNonRadialStripCorrectionLookupNoExtRInCoordinatesCorrections") {
+        variablesTransformations[combinationIndex].push_back(
+            std::make_shared<TransformCorrectedPhiFirstOrderExtrapolatedRFirstOrderNonRadialStripCorrectionLookupNoExtRInCoordinatesCorrections>(varName,
+                                                                                                                                                 preEstimateChargeOverPtFileName,
+                                                                                                                                                 preEstimateTgThetaFileName,
+                                                                                                                                                 meanRadius));
       }
       else if (varName == "CorrectedPhiSecondOrderExtrapolatedRSecondOrderNonRadialStripCorrection") {
         variablesTransformations[combinationIndex].push_back(
@@ -167,7 +195,6 @@ void initializeVariablesTransformations(const std::vector<std::string> & inputVa
       else if (varName == "ExtrapolatedRSecondOrder") {
         variablesTransformations[combinationIndex].push_back(
             std::make_shared<TransformExtrapolatedRSecondOrder>(varName, preEstimateTgThetaFileName, preEstimateChargeOverPtFileName, meanRadius));
-//            std::make_shared<TransformExtrapolatedRSecondOrder>(varName, preEstimateCotThetaFileName, preEstimateChargeOverPtFileName, meanRadius));
       }
       else if (varName == "ExtrapolatedRExact") {
         variablesTransformations[combinationIndex].push_back(
@@ -179,6 +206,14 @@ void initializeVariablesTransformations(const std::vector<std::string> & inputVa
       else if (varName == "CorrectedZFirstOrder") {
         variablesTransformations[combinationIndex].push_back(
             std::make_shared<TransformCorrectedZFirstOrder>(varName, preEstimateCotThetaFileName, meanRadius));
+      }
+      else if (varName == "CorrectedZFirstOrderExtrapolatedR") {
+        variablesTransformations[combinationIndex].push_back(
+            std::make_shared<TransformCorrectedZFirstOrderExtrapolatedR>(varName, preEstimateCotThetaFileName, preEstimateTgThetaFileName, meanRadius));
+      }
+      else if (varName == "CorrectedZFirstOrderExtrapolatedRSecondOrder") {
+        variablesTransformations[combinationIndex].push_back(
+            std::make_shared<TransformCorrectedZFirstOrderExtrapolatedRSecondOrder>(varName, preEstimateCotThetaFileName, preEstimateTgThetaFileName, preEstimateChargeOverPtFileName, meanRadius));
       }
       else if (varName == "CorrectedZSecondOrder") {
         variablesTransformations[combinationIndex].push_back(

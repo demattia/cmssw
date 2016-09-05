@@ -20,6 +20,14 @@ TTTCsFromPattern = ( cms.EDProducer("TrackFitTCProducer",
                                     )
                      )
 
+TTCBsFromPattern = ( cms.EDProducer("TrackFitCBProducer",
+                                    TTInputStubs       = cms.InputTag("TTStubsFromPixelDigis", "StubAccepted"),
+                                    TTInputPatterns    = cms.InputTag("MergePROutput", "AML1Patterns"),
+                                    TTTrackName        = cms.string("AML1CBs"),
+                                    AdvancedCombinationBuilder = cms.bool(False)
+                                    )
+                     )
+
 TTTracksINFNFromTC = ( cms.EDProducer("TrackFitPCAProducer",
                                   TTInputStubs       = cms.InputTag("TTStubsFromPixelDigis", "StubAccepted"),
                                   TTInputPatterns    = cms.InputTag("MergeTCOutput", "AML1TCs"),
@@ -34,8 +42,24 @@ TTTracksTAMUFromTC = ( cms.EDProducer("AMTrackProducer",
                                   TTInputStubs       = cms.InputTag("TTStubsFromPixelDigis", "StubAccepted"),
                                   TTInputPatterns    = cms.InputTag("MergeTCOutput", "AML1TCs"),
                                   TTTrackName        = cms.string("AML1Tracks"),
+                                  CutOnPrincipals    = cms.bool(False)
                                   )
                    )
+
+TTTracksTAMUFromCB = ( cms.EDProducer("AMTrackProducer",
+                                  TTInputStubs       = cms.InputTag("TTStubsFromPixelDigis", "StubAccepted"),
+                                  TTInputPatterns    = cms.InputTag("MergeCBOutput", "AML1CBs"),
+                                  TTTrackName        = cms.string("AML1Tracks"),
+                                  CutOnPrincipals    = cms.bool(False)
+                                  )
+                   )
+
+DuplicateRemovalTAMU = ( cms.EDProducer("TrackFitDRProducer",
+                                        TTTrackName        = cms.InputTag("MergeFITCBOutput", "AML1Tracks"),
+                                        CleanedTTTrackName = cms.string("CleanedAML1Tracks"),
+                                        ParameterBased     = cms.bool(False)
+                                        )
+                     )
 
 
 # AM output merging sequence
@@ -57,6 +81,15 @@ MergeTCOutput = cms.EDProducer("AMOutputMerger",
    TTPatternsName      = cms.string("AML1TCs")                         
 )
 
+MergeCBOutput = cms.EDProducer("AMOutputMerger",
+   TTInputClusters     = cms.InputTag("TTStubsFromPixelDigis", "ClusterAccepted"),
+   TTInputStubs        = cms.InputTag("TTStubsFromPixelDigis", "StubAccepted"),
+   TTInputPatterns     = cms.VInputTag(cms.InputTag("TTCBsFromPattern", "AML1CBs")),                               
+   TTFiltClustersName  = cms.string("ClusInCB"),
+   TTFiltStubsName     = cms.string("StubInCB"),
+   TTPatternsName      = cms.string("AML1CBs")                         
+)
+
 MergeTCOutputb = cms.EDProducer("AMOutputMerger",
    TTInputClusters     = cms.InputTag("TTStubsFromPixelDigis", "ClusterAccepted"),
    TTInputStubs        = cms.InputTag("TTStubsFromPixelDigis", "StubAccepted"),
@@ -73,4 +106,22 @@ MergeFITOutput = cms.EDProducer("AMOutputMerger",
    TTFiltClustersName  = cms.string("ClusInTrack"),
    TTFiltStubsName     = cms.string("StubInTrack"),
    TTPatternsName      = cms.string("AML1Tracks")                         
+)
+
+MergeFITCBOutput = cms.EDProducer("AMOutputMerger",
+   TTInputClusters     = cms.InputTag("TTStubsFromPixelDigis", "ClusterAccepted"),
+   TTInputStubs        = cms.InputTag("TTStubsFromPixelDigis", "StubAccepted"),
+   TTInputPatterns     = cms.VInputTag(cms.InputTag("TTTracksTAMUFromCB", "AML1Tracks")),                               
+   TTFiltClustersName  = cms.string("ClusInTrack"),
+   TTFiltStubsName     = cms.string("StubInTrack"),
+   TTPatternsName      = cms.string("AML1Tracks")                         
+)
+
+MergeDROutput = cms.EDProducer("AMOutputMerger",
+   TTInputClusters     = cms.InputTag("TTStubsFromPixelDigis", "ClusterAccepted"),
+   TTInputStubs        = cms.InputTag("TTStubsFromPixelDigis", "StubAccepted"),
+   TTInputPatterns     = cms.VInputTag(cms.InputTag("DuplicateRemovalTAMU", "CleanedAML1Tracks")),
+   TTFiltClustersName  = cms.string("ClusInTrack"),
+   TTFiltStubsName     = cms.string("StubInTrack"),
+   TTPatternsName      = cms.string("CleanedAML1Tracks")
 )

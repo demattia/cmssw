@@ -1,4 +1,4 @@
-#include "../interface/MatrixReader.h"
+#include "L1Trigger/TrackFindingAM/interface/MatrixReader.h"
 
 using namespace Eigen;
 
@@ -22,11 +22,15 @@ MatrixReader::MatrixReader(const std::string & inputFileName)
   // std::cout << "Number of track parameters = " << nTrackParameters_ << std::endl;
   // std::cout << std::endl;
 
-  double x;
+  long double x;
   // Read eigenvalues
   sqrtEigenvalues_ = Matrix<long double, Dynamic, 1>::Zero(nVars_);
   for (int i=0; i < nVars_; ++i) {
     inputFile >> x;
+    if (x == 0.) {
+      std::cout << "MatrixReader Error: null eigenvalue found = " << x << std::endl;
+      throw;
+    }
     sqrtEigenvalues_(i) = x;
   }
   // std::cout << "sqrt(eigenvalues):" << std::endl;
@@ -37,7 +41,7 @@ MatrixReader::MatrixReader(const std::string & inputFileName)
   for (int i = 0; i < nVars_; ++i) {
     for (int j = 0; j < nVars_; ++j) {
       inputFile >> x;
-      V_(i, j) = x;
+      V_(i, j) = x/sqrtEigenvalues_(i);
     }
   }
   // std::cout << "V:" << std::endl;
@@ -79,7 +83,7 @@ double MatrixReader::normChi2(const Matrix<long double, Dynamic, 1> & vars) cons
   double chi2 = 0.;
   // Use only the constraints to evaluate a chi2
   for (int i=0; i<nDof_; ++i) {
-    chi2 += (principal(i)/sqrtEigenvalues_[i])*(principal(i)/sqrtEigenvalues_[i]);
+    chi2 += principal(i)*principal(i);
   }
   return chi2/nDof_;
 }
@@ -90,6 +94,7 @@ std::vector<double> MatrixReader::trackParameters(const Matrix<long double, Dyna
   std::vector<double> pars;
 
   // Estimate track parameters
+//  std::cout << "D = " << D_ << std::setprecision(20) << std::endl;
   Matrix<long double, Dynamic, 1> estimatedPars = D_ * (vars - meanValues_) + meanPars_;
   for (int i=0; i<nTrackParameters_; ++i) {
     pars.push_back(estimatedPars(i));
@@ -104,9 +109,8 @@ std::vector<double> MatrixReader::principalComponents(const Matrix<long double, 
   std::vector<double> pcs;
 
   Matrix<long double, Dynamic, 1> principal = V_*(vars - meanValues_);
-
   for (int i=0; i<nVars_; ++i) {
-    pcs.push_back(principal(i));
+    pcs.push_back(principal(i)*sqrtEigenvalues_[i]);
   }
 
   return pcs;
@@ -118,9 +122,8 @@ std::vector<double> MatrixReader::normalizedPrincipalComponents(const Matrix<lon
   std::vector<double> npcs;
 
   Matrix<long double, Dynamic, 1> principal = V_*(vars - meanValues_);
-
   for (int i=0; i<nVars_; ++i) {
-    npcs.push_back(principal(i)/sqrtEigenvalues_(i));
+    npcs.push_back(principal(i));
   }
 
   return npcs;

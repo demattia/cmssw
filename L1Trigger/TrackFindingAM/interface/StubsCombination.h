@@ -7,8 +7,8 @@
 
 #include <vector>
 #include <cmath>
-#include "Stub.h"
-#include "CombinationIndex.h"
+#include "L1Trigger/TrackFindingAM/interface/Stub.h"
+#include "L1Trigger/TrackFindingAM/interface/CombinationIndex.h"
 
 class StubsCombination
 {
@@ -17,17 +17,20 @@ class StubsCombination
       genChargeOverPt_(0.), genPhi0_(0.), genD0_(0.), genCotTheta_(0.), genZ0_(0.), combinationIndex_(0)
   {}
   void clear();
-  void pushStub(const double & phi, const double & R, const double & z, const int layer, const float strip);
+  void pushStub(const double & phi, const double & R, const double & z, const int layer, const float & strip);
+  void pushStub(const Stub & stub);
   void setGenTrack(const double & genChargeOverPt, const double & genPhi0, const double & genD0,
                    const double & genCotTheta, const double & genZ0);
-  void build(const StubsCombination & stubsCombination, const std::vector<int> & combination);
+  void build(const StubsCombination & stubsCombination, const std::vector<int> & combination, const int regionsNumber);
   double genChargeOverPt() const { return genChargeOverPt_; }
+  double genChargePt() const { return genChargeOverPt_ == 0. ? 0. : 1./genChargeOverPt_; }
   double genPhi0() const { return genPhi0_; }
   double genD0() const { return genD0_; }
   double genCotTheta() const { return genCotTheta_; }
+  double genEta() const { return genCotTheta_ == 0. ? 0. : -log(tan(atan(genCotTheta_)/2.)); }
   double genZ0() const { return genZ0_; }
   const Stub & stub(const int i) const { return stubs_.at(i); }
-  void setCombinationIndex() { combinationIndex_ = combinationIndex(stubs_); }
+  void setCombinationIndex(const int regionsNumber) { combinationIndex_ = combinationIndex(stubs_, regionsNumber); }
   unsigned long getCombinationIndex() const { return combinationIndex_; }
   size_t size() const { return stubs_.size(); }
   double phi(const int index) const { return stubs_.at(index).phi(); }
@@ -42,6 +45,7 @@ class StubsCombination
   std::vector<double> zVector() const;
   std::vector<double> variables() const;
   std::vector<int> layers() const;
+  std::vector<int> stripIndexes() const;
   std::vector<Stub>::const_iterator begin() const { return stubs_.begin(); }
   std::vector<Stub>::const_iterator end() const { return stubs_.end(); }
   double genTrackDistanceTransverse(const int index) const;

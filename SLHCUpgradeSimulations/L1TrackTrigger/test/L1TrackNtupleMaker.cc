@@ -147,6 +147,7 @@ private:
   std::vector<float>* m_trk_matchtp_phi;
   std::vector<float>* m_trk_matchtp_z0;
   std::vector<float>* m_trk_matchtp_dxy;
+  std::vector<std::vector<int> >* m_trk_stub_indexes;
 
   // all tracking particles
   std::vector<float>* m_tp_pt;
@@ -164,6 +165,7 @@ private:
   std::vector<int>*   m_tp_nstublayer;     //number of layers/disks with at least one stub associated to the TP
   std::vector<int>*   m_tp_ngenstublayer;  //number of layers/disks with at least one GENUINE stub associated to the TP
   std::vector<int>*   m_tp_eventid;
+  std::vector<std::vector<int> >* m_tp_stub_indexes;
 
   // *L1 track* properties if m_tp_nmatch > 0
   std::vector<float>* m_matchtrk_pt;
@@ -275,6 +277,7 @@ void L1TrackNtupleMaker::beginJob()
   m_trk_matchtp_phi = new std::vector<float>;
   m_trk_matchtp_z0 = new std::vector<float>;
   m_trk_matchtp_dxy = new std::vector<float>;
+  m_trk_stub_indexes = new std::vector<std::vector<int> >;
 
   m_tp_pt     = new std::vector<float>;
   m_tp_eta    = new std::vector<float>;
@@ -291,6 +294,7 @@ void L1TrackNtupleMaker::beginJob()
   m_tp_nstublayer = new std::vector<int>;
   m_tp_ngenstublayer = new std::vector<int>;
   m_tp_eventid = new std::vector<int>;
+  m_tp_stub_indexes = new std::vector<std::vector<int> >;
 
   m_matchtrk_pt    = new std::vector<float>;
   m_matchtrk_eta   = new std::vector<float>;
@@ -343,6 +347,7 @@ void L1TrackNtupleMaker::beginJob()
     eventTree->Branch("trk_matchtp_phi",  &m_trk_matchtp_phi);
     eventTree->Branch("trk_matchtp_z0",   &m_trk_matchtp_z0);
     eventTree->Branch("trk_matchtp_dxy",  &m_trk_matchtp_dxy);
+    eventTree->Branch("trk_stub_indexes", &m_trk_stub_indexes);
   }
 
   eventTree->Branch("tp_pt",     &m_tp_pt);
@@ -360,6 +365,7 @@ void L1TrackNtupleMaker::beginJob()
   eventTree->Branch("tp_nstublayer",    &m_tp_nstublayer);
   eventTree->Branch("tp_ngenstublayer", &m_tp_ngenstublayer);
   eventTree->Branch("tp_eventid",&m_tp_eventid);
+  eventTree->Branch("tp_stub_indexes",&m_tp_stub_indexes);
 
   eventTree->Branch("matchtrk_pt",      &m_matchtrk_pt);
   eventTree->Branch("matchtrk_eta",     &m_matchtrk_eta);
@@ -430,6 +436,7 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
     m_trk_matchtp_phi->clear();
     m_trk_matchtp_z0->clear();
     m_trk_matchtp_dxy->clear();
+    m_trk_stub_indexes->clear();
   }
   
   m_tp_pt->clear();
@@ -447,6 +454,7 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
   m_tp_nstublayer->clear();
   m_tp_ngenstublayer->clear();
   m_tp_eventid->clear();
+  m_tp_stub_indexes->clear();
 
   m_matchtrk_pt->clear();
   m_matchtrk_eta->clear();
@@ -615,6 +623,21 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
       float tmp_trk_chi2 = iterL1Track->getChi2(L1Tk_nPar);
       float tmp_trk_consistency = iterL1Track->getStubPtConsistency(L1Tk_nPar);
       int tmp_trk_nstub  = (int) iterL1Track->getStubRefs().size();
+
+      // Save the index to the stubs
+      std::vector<int> tmp_indexes;
+      if (SaveStubs) {
+	for (auto sr : iterL1Track->getStubRefs()) {
+	  tmp_indexes.push_back(sr.index());
+	  // std::cout << "stub index = " << sr.index() << std::endl;
+	  // GlobalPoint posStub = theStackedGeometry->findGlobalPosition(&(*sr));
+	  // float tmp_stub_x = posStub.x();
+	  // float tmp_stub_y = posStub.y();
+	  // float tmp_stub_z = posStub.z();
+	  // std::cout << "stub (x, y, z) =  (" << tmp_stub_x << ", " << tmp_stub_y << ", " << tmp_stub_z << ")" << std::endl;
+	  // std::cout << "stub from index = (" << m_allstub_x->at(sr.index()) << ", " << m_allstub_y->at(sr.index()) << ", " << m_allstub_z->at(sr.index()) << ")" << std::endl;
+	}
+      }
             
       int tmp_trk_genuine = 0;
       int tmp_trk_loose = 0;
@@ -646,6 +669,7 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
       m_trk_loose->push_back(tmp_trk_loose);
       m_trk_unknown->push_back(tmp_trk_unknown);
       m_trk_combinatoric->push_back(tmp_trk_combinatoric);
+      m_trk_stub_indexes->push_back(tmp_indexes);
       
 
       // ----------------------------------------------------------------------------------------------
@@ -794,7 +818,13 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
     }
     
     std::vector< edm::Ref< edmNew::DetSetVector< TTStub< Ref_PixelDigi_ > >, TTStub< Ref_PixelDigi_ > > > theStubRefs = MCTruthTTStubHandle->findTTStubRefs(tp_ptr);
-    int nStubTP = (int) theStubRefs.size(); 
+    std::vector<int> tmp_stub_indexes;
+    if (SaveStubs) {
+      for (auto sr : theStubRefs) {
+	tmp_stub_indexes.push_back(sr.index());
+      }
+    }
+    int nStubTP = (int) theStubRefs.size();
 
     // how many layers/disks have stubs?
     int hasStubInLayer[11] = {0};
@@ -1018,6 +1048,7 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
     m_tp_nstublayer->push_back(nStubLayerTP);
     m_tp_ngenstublayer->push_back(nStubLayerTP_g);
     m_tp_eventid->push_back(tmp_eventid);
+    m_tp_stub_indexes->push_back(tmp_stub_indexes);
 
     m_matchtrk_pt ->push_back(tmp_matchtrk_pt);
     m_matchtrk_eta->push_back(tmp_matchtrk_eta);

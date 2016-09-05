@@ -308,7 +308,7 @@ void PatternFinder::find(int start, int& stop){
 
     //TAMU PCA
     string dataDir = "./tamu_data/";
-    shared_ptr<LinearizedTrackFitter> linearizedTrackFitter = make_shared<LinearizedTrackFitter>(dataDir.c_str(), true, true);
+    shared_ptr<LinearizedTrackFitter> linearizedTrackFitter = make_shared<LinearizedTrackFitter>(dataDir.c_str(), true, 3, true, 14);
     
     // loop on sectors
     for(unsigned int i=0;i<pattern_list.size();i++){

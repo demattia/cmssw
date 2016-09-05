@@ -8,84 +8,58 @@
 #include <vector>
 #include <memory>
 #include <bitset>
-#include "GetVariables.h"
-#include "MatrixReader.h"
-#include "CombinationIndexListBuilder.h"
-#include "BuildTestFunctions.h"
+#include "L1Trigger/TrackFindingAM/interface/LinearizedTrackFitterBase.h"
+#include <TH2D.h>
+#include <TFile.h>
 
-class LinearizedTrackFitter
+class LinearizedTrackFitter : public LinearizedTrackFitterBase
 {
  public:
   LinearizedTrackFitter(const std::string & baseDir, const bool inputExtrapolateR,
-                        const bool inputCorrectNonRadialStrips);
-
-  double fit(const std::vector<double> & vars, const std::vector<int> & layers);
+                        const int inputExtrapolatedRPrecision,
+                        const bool inputCorrectNonRadialStrips, const int regionsNumber,
+                        const bool doCutOnPrincipals_ = false,
+                        const std::string & preEstimatePtDirName = "",
+                        const std::string & preEstimateCotThetaDirName = "",
+                        const std::string & linearFitLowPtDirName = "",
+                        const std::string & linearFitHighPtDirName = "",
+                        const std::string & linearFitLongitudinalDirName = "");
+  virtual ~LinearizedTrackFitter() = default;
+  virtual double fit(const std::vector<double> & vars, const std::vector<int> & layers);
+  virtual double fit(const std::vector<double> & vars, const std::vector<int> & layers,
+                     const std::vector<int> & stripIndexes) { return fit(vars, layers); }
   double fit(const std::vector<double> & vars, const int bits);
-  std::vector<double> estimatedPars() { return estimatedPars_; }
-  std::vector<double> principalComponents();
-  std::vector<double> normalizedPrincipalComponents();
+  virtual std::vector<double> principalComponents();
+  virtual std::vector<double> normalizedPrincipalComponents();
 
- private:
-  void initialize(const std::vector<double> & vars, const std::vector<int> & layers);
-  double fit(const double & chargeOverTwoRho, const double & cotTheta, const double & tgTheta);
-  inline void computeRotationFactor(const std::vector<double> & vars)
-  {
-    // Make it so that they are all between -0.4 and 0.4
-    if (vars.size() > 0) rotationFactor_ = int(vars.at(0)/0.4)*0.4;
-  }
+  std::vector<double> getFirstOrderTerm() { return firstOrderTerm_; }
+  std::vector<double> getSecondOrderTerm1() { return secondOrderTerm1_; }
+  std::vector<double> getSecondOrderTerm2() { return secondOrderTerm2_; }
+  std::vector<double> getSecondOrderTerm3() { return secondOrderTerm3_; }
 
-  std::string preEstimatePtDirName_;
-  std::string preEstimateCotThetaDirName_;
-  std::string linearFitLowPtDirName_;
-  std::string linearFitHighPtDirName_;
-  std::string linearFitLongitudinalDirName_;
+ protected:
+  virtual bool initialize(const std::vector<double> & vars, const std::vector<int> & layers);
+  virtual bool initialize(const std::vector<double> & vars, const std::vector<int> & layers,
+                          const std::vector<int> & stripIndexes) { return initialize(vars, layers); }
+  virtual double fit(const double & chargeOverTwoRho, const double & cotTheta, const double & tgTheta);
+  bool principalCuts(const std::vector<double> & princes);
+
+  double preEstimatedPt_;
   std::vector<double> varsR_;
   std::vector<double> extrapolatedR_;
   Matrix<long double, Dynamic, 1> correctedVarsPhi_;
   Matrix<long double, Dynamic, 1> correctedVarsZ_;
-  double preEstimatedPt_;
-  double ptSplitValue_;
-  std::vector<double> estimatedPars_;
-  std::vector<double> principalComponents_;
-  std::vector<double> normalizedPrincipalComponents_;
   std::unordered_map<unsigned long, EstimatorSimple> chargeOverPtEstimator_;
   std::unordered_map<unsigned long, EstimatorSimple> cotThetaEstimator_;
   std::unordered_map<unsigned long, EstimatorSimple> tgThetaEstimator_;
   std::unordered_map<unsigned long, MatrixReader> linearFitLowPt_;
   std::unordered_map<unsigned long, MatrixReader> linearFitHighPt_;
   std::unordered_map<unsigned long, MatrixReader> linearFitLongitudinal_;
-  std::unordered_map<unsigned long, std::vector<double> > meanRadius_;
-  unsigned long combinationIndex_;
-  std::vector<int> uniqueLayers_;
-  unsigned int varsNum_;
-  std::string baseDir_;
-  CombinationIndexListBuilder combinationIndexListBuilder_;
-  bool extrapolateR_;
-  bool correctNonRadialStrips_;
-  double rotationFactor_;
-
-  template <class T>
-  void fillMatrices(const std::string & baseDir, const std::string & fileName,
-                    std::unordered_map<unsigned long, T> * matrices)
-  {
-    bool fiveOutOfSix = true;
-
-    std::vector<unsigned long> combinationIndexList;
-    combinationIndexListBuilder_.fillDefaultIndexList(combinationIndexList, fiveOutOfSix);
-
-    for (auto index : combinationIndexList) {
-      try {
-        std::string fullFileName(fileName);
-        fullFileName.replace(fullFileName.find("0"), 1, std::to_string(index));
-        fullFileName = baseDir+"/"+fullFileName;
-        matrices->insert(std::make_pair(index, T(fullFileName)));
-      }
-      catch (int exception) {
-        // std::cout << "Error: Matrix for combination = " << index << " not found" << std::endl;
-        // throw;
-      }
-    }
-  }
+  CorrectPhiForNonRadialStripsLookup correctPhiForNonRadialStripsLookup_;
+  std::vector<double> firstOrderTerm_;
+  std::vector<double> secondOrderTerm1_;
+  std::vector<double> secondOrderTerm2_;
+  std::vector<double> secondOrderTerm3_;
 };
 
 #endif //REMOTEPROJECTS_LINEARIZEDTRACKFITTER_H

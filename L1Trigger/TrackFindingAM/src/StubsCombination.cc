@@ -2,7 +2,7 @@
 // Created by Marco De Mattia on 7/30/15.
 //
 
-#include "../interface/StubsCombination.h"
+#include "L1Trigger/TrackFindingAM/interface/StubsCombination.h"
 
 void StubsCombination::clear()
 {
@@ -16,9 +16,15 @@ void StubsCombination::clear()
 }
 
 void StubsCombination::pushStub(const double & phi, const double & R, const double & z,
-                                const int layer, const float strip)
+                                const int layer, const float & strip)
 {
   stubs_.push_back(Stub(phi, R, z, layer, strip));
+}
+
+
+void StubsCombination::pushStub(const Stub & stub)
+{
+  stubs_.push_back(stub);
 }
 
 
@@ -33,13 +39,14 @@ void StubsCombination::setGenTrack(const double & genChargeOverPt, const double 
 }
 
 
-void StubsCombination::build(const StubsCombination & stubsCombination, const std::vector<int> & combination)
+void StubsCombination::build(const StubsCombination & stubsCombination, const std::vector<int> & combination,
+                             const int regionsNumber)
 {
   setGenTrack(stubsCombination.genChargeOverPt(), stubsCombination.genPhi0(), stubsCombination.genD0(),
               stubsCombination.genCotTheta(), stubsCombination.genZ0());
   stubs_.clear();
   for (auto i : combination) stubs_.push_back(stubsCombination.stub(i));
-  setCombinationIndex();
+  setCombinationIndex(regionsNumber);
 }
 
 
@@ -72,6 +79,14 @@ std::vector<int> StubsCombination::layers() const
   std::vector<int> layersVec;
   for (const Stub & s : stubs_) layersVec.push_back(s.layer());
   return layersVec;
+}
+
+
+std::vector<int> StubsCombination::stripIndexes() const
+{
+  std::vector<int> stripIndexesVec;
+  for (const Stub & s : stubs_) stripIndexesVec.push_back(s.strip());
+  return stripIndexesVec;
 }
 
 

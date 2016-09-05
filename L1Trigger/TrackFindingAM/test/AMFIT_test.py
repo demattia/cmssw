@@ -19,7 +19,7 @@
 
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process('AMFIT')
+process = cms.Process('AMFIT2')
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
@@ -34,7 +34,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('L1Trigger.TrackTrigger.TrackTrigger_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(5)
+    input = cms.untracked.int32(-1)
 )
 
 # Input source
@@ -45,7 +45,8 @@ process.maxEvents = cms.untracked.PSet(
 #
 
 process.source = cms.Source("PoolSource",
-                            fileNames = cms.untracked.vstring('file:AMTC_output.root'),
+                            # fileNames = cms.untracked.vstring('file:/fdata/hepx/store/user/demattia/Seb/CMSSW_6_2_0_SLHC27/src/PU200_TTBAR_TC.root'),
+                            fileNames = cms.untracked.vstring('file:/home/demattia/Seb/CMSSW_6_2_0_SLHC27/src/L1Trigger/TrackFindingAM/test/TC_crash_in.root'),
                             duplicateCheckMode = cms.untracked.string( 'noDuplicateCheck' )
 )
 
@@ -78,10 +79,11 @@ process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
 
 # Keep the PR output
 process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMPR')
-process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMTC')
+# process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMTC')
+process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMTCBASE')
 
 # Keep the FIT output
-process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMFIT')
+process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMFIT2')
 process.RAWSIMoutput.outputCommands.append('drop *_TTTracks*FromTC_*_*')
 process.RAWSIMoutput.outputCommands.append('keep  *_*_MergedTrackTruth_*')
 

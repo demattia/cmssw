@@ -40,11 +40,15 @@ TTPatternsFromStubswStubs   = cms.Sequence(TTPatternsFromStub*MergePROutput*TTSt
 
 TTTCsFromPatterns  = cms.Sequence(TTTCsFromPattern)
 
+TTCBsFromPatterns  = cms.Sequence(TTCBsFromPattern)
+
 
 # The sequence. Note that we call the Merge plugins because the filtered containers are created
 # here. We just merge one branch...
 
 TTTCsFromPatternswStubs   = cms.Sequence(TTTCsFromPattern*MergeTCOutput*MergeTCOutputb*TTStubAssociatorFromPixelDigis*TTTrackAssociatorFromPixelDigis)
+
+TTCBsFromPatternswStubs   = cms.Sequence(TTCBsFromPattern*MergeCBOutput*TTStubAssociatorFromPixelDigis*TTTrackAssociatorFromPixelDigis)
 
 ############################################
 # STEP 3: PCA fit 
@@ -58,12 +62,19 @@ TTTCsFromPatternswStubs   = cms.Sequence(TTTCsFromPattern*MergeTCOutput*MergeTCO
 
 TTTracksFromTCs  = cms.Sequence(TTTracksTAMUFromTC)
 
+TTTracksFromCBs  = cms.Sequence(TTTracksTAMUFromCB)
+
+# Duplicate removal
+DuplicateRemovalTAMUs  = cms.Sequence(DuplicateRemovalTAMU)
 
 # The sequence. Note that we call the Merge plugins because the filtered containers are created
 # here. We just merge one branch...
 
 #TTTracksFromTCswStubs   = cms.Sequence(TTTracksINFNFromTC*MergeFITOutput*TTStubAssociatorFromPixelDigis*TTTrackAssociatorFromPixelDigis)
 TTTracksFromTCswStubs   = cms.Sequence(TTTracksTAMUFromTC*MergeFITOutput*TTStubAssociatorFromPixelDigis*TTTrackAssociatorFromPixelDigis)
+TTTracksFromCBswStubs   = cms.Sequence(TTTracksTAMUFromCB*MergeFITCBOutput*TTStubAssociatorFromPixelDigis*TTTrackAssociatorFromPixelDigis)
+
+DuplicateRemovalTAMUswStubs   = cms.Sequence(DuplicateRemovalTAMU*MergeDROutput*TTStubAssociatorFromPixelDigis*TTTrackAssociatorFromPixelDigis)
 
 ############################################
 # STEP 4: MERGE PR outputs
@@ -76,5 +87,3 @@ TTStubAssociatorFromPixelDigis.TTStubs        = cms.VInputTag( cms.InputTag("Mer
 TTStubAssociatorFromPixelDigis.TTClusterTruth = cms.VInputTag( cms.InputTag("TTClusterAssociatorFromPixelDigis","ClusterAccepted"))
 
 MergePROutputs  = cms.Sequence(MergePROutput*TTStubAssociatorFromPixelDigis)
-
-
