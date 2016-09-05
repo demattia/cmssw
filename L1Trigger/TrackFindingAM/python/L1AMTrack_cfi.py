@@ -57,7 +57,8 @@ TTTracksTAMUFromCB = ( cms.EDProducer("AMTrackProducer",
 DuplicateRemovalTAMU = ( cms.EDProducer("TrackFitDRProducer",
                                         TTTrackName        = cms.InputTag("MergeFITCBOutput", "AML1Tracks"),
                                         CleanedTTTrackName = cms.string("CleanedAML1Tracks"),
-                                        ParameterBased     = cms.bool(False)
+                                        ParameterBased     = cms.bool(False),
+                                        MaxCommonStubs     = cms.uint32(2)
                                         )
                      )
 

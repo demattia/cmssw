@@ -100,6 +100,9 @@ process.RAWSIMoutput_step    = cms.EndPath(process.RAWSIMoutput)
 # Uncomment this to use the parameter-based duplicate removal
 # process.DuplicateRemovalTAMU.ParameterBased = True
 
+# Use this to change the maximum number of common stubs for the stub-based duplicate removal
+# process.DuplicateRemovalTAMU.MaxCommonStubs = 2
+
 process.schedule = cms.Schedule(process.L1AMDR_step,process.endjob_step,process.RAWSIMoutput_step)
 # process.schedule = cms.Schedule(process.L1AMCB_step,process.L1AMFIT_step,process.endjob_step,process.RAWSIMoutput_step)
 

@@ -55,6 +55,7 @@ class TrackFitDRProducer : public edm::EDProducer
   bool parameterBased_;
   slhcl1tt::ParameterDuplicateRemoval parameterDuplicateRemoval_;
   slhcl1tt::DuplicateRemoval duplicateRemoval_;
+  unsigned int maxCommonStubs_;
 };
 
 
@@ -71,6 +72,7 @@ TrackFitDRProducer::TrackFitDRProducer(const edm::ParameterSet& iConfig)
   TracksTag_ = iConfig.getParameter<edm::InputTag>("TTTrackName");
   CleanedTracksTag_= iConfig.getParameter<std::string>("CleanedTTTrackName");
   parameterBased_ = iConfig.getParameter<bool>("ParameterBased");
+  maxCommonStubs_ = iConfig.getParameter<unsigned int>("MaxCommonStubs");
   produces< std::vector< TTTrack< Ref_PixelDigi_ > > >( CleanedTracksTag_ );
 }
 
@@ -84,7 +86,7 @@ void TrackFitDRProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSet
     iEvent.put(L1TkTracksForOutput, CleanedTracksTag_);
   }
   else {
-    std::auto_ptr< std::vector< TTTrack< Ref_PixelDigi_ > > > L1TkTracksForOutput(new std::vector< TTTrack< Ref_PixelDigi_ > >(duplicateRemoval_.CheckTracks(*TTTrackHandle)));
+    std::auto_ptr< std::vector< TTTrack< Ref_PixelDigi_ > > > L1TkTracksForOutput(new std::vector< TTTrack< Ref_PixelDigi_ > >(duplicateRemoval_.CheckTracks(*TTTrackHandle, maxCommonStubs_)));
     iEvent.put(L1TkTracksForOutput, CleanedTracksTag_);
   }
 }
