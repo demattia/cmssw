@@ -12,7 +12,8 @@ LinearizedTrackFitterBase::LinearizedTrackFitterBase(const std::string & baseDir
                                                      const std::string & preEstimateCotThetaDirName,
                                                      const std::string & linearFitLowPtDirName,
                                                      const std::string & linearFitHighPtDirName,
-                                                     const std::string & linearFitLongitudinalDirName) :
+                                                     const std::string & linearFitLongitudinalDirName,
+                                                     const bool alignPrincipals) :
     preEstimatePtDirName_(preEstimatePtDirName),
     preEstimateCotThetaDirName_(preEstimateCotThetaDirName),
     linearFitLowPtDirName_(linearFitLowPtDirName),
@@ -31,6 +32,7 @@ LinearizedTrackFitterBase::LinearizedTrackFitterBase(const std::string & baseDir
     ndofLongitudinal_(-1),
     rotationFactor_(0.),
     negativeZ_(false),
+    alignPrincipals_(alignPrincipals),
     doCutOnPrincipals_(doCutOnPrincipals)
 {
   if (extrapolatedRPrecision_ < 0 || extrapolatedRPrecision_ > 4) {

@@ -133,8 +133,9 @@ private:
   std::vector<float>* m_trk_phi;
   std::vector<float>* m_trk_d0;   // (filled if L1Tk_nPar==5, else 999)
   std::vector<float>* m_trk_z0;
-  std::vector<float>* m_trk_chi2; 
-  std::vector<float>* m_trk_consistency; 
+  std::vector<float>* m_trk_chi2;
+  std::vector<unsigned int>* m_trk_sector;
+  std::vector<float>* m_trk_consistency;
   std::vector<int>*   m_trk_nstub;
   std::vector<int>*   m_trk_genuine;
   std::vector<int>*   m_trk_loose;
@@ -264,6 +265,7 @@ void L1TrackNtupleMaker::beginJob()
   m_trk_z0    = new std::vector<float>;
   m_trk_d0    = new std::vector<float>;
   m_trk_chi2  = new std::vector<float>;
+  m_trk_sector = new std::vector<unsigned int>;
   m_trk_nstub = new std::vector<int>;
   m_trk_consistency  = new std::vector<float>;
   m_trk_genuine      = new std::vector<int>;
@@ -334,6 +336,7 @@ void L1TrackNtupleMaker::beginJob()
     eventTree->Branch("trk_d0",    &m_trk_d0);
     eventTree->Branch("trk_z0",    &m_trk_z0);
     eventTree->Branch("trk_chi2",  &m_trk_chi2);
+    eventTree->Branch("trk_sector",       &m_trk_sector);
     eventTree->Branch("trk_nstub", &m_trk_nstub);
     eventTree->Branch("trk_consistency",  &m_trk_consistency);
     eventTree->Branch("trk_genuine",      &m_trk_genuine);
@@ -423,6 +426,7 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
     m_trk_d0->clear();
     m_trk_z0->clear();
     m_trk_chi2->clear();
+    m_trk_sector->clear();
     m_trk_nstub->clear();
     m_trk_consistency->clear();
     m_trk_genuine->clear();
@@ -621,6 +625,7 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
       }
 
       float tmp_trk_chi2 = iterL1Track->getChi2(L1Tk_nPar);
+      unsigned int tmp_trk_sector = iterL1Track->getSector();
       float tmp_trk_consistency = iterL1Track->getStubPtConsistency(L1Tk_nPar);
       int tmp_trk_nstub  = (int) iterL1Track->getStubRefs().size();
 
@@ -663,6 +668,7 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
       if (L1Tk_nPar==5) m_trk_d0->push_back(tmp_trk_d0);
       else m_trk_d0->push_back(999.);
       m_trk_chi2 ->push_back(tmp_trk_chi2);
+      m_trk_sector->push_back(tmp_trk_sector);
       m_trk_consistency->push_back(tmp_trk_consistency);
       m_trk_nstub->push_back(tmp_trk_nstub);
       m_trk_genuine->push_back(tmp_trk_genuine);

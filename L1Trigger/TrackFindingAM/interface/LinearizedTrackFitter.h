@@ -23,7 +23,8 @@ class LinearizedTrackFitter : public LinearizedTrackFitterBase
                         const std::string & preEstimateCotThetaDirName = "",
                         const std::string & linearFitLowPtDirName = "",
                         const std::string & linearFitHighPtDirName = "",
-                        const std::string & linearFitLongitudinalDirName = "");
+                        const std::string & linearFitLongitudinalDirName = "",
+                        const bool alignPrincipals = true);
   virtual ~LinearizedTrackFitter() = default;
   virtual double fit(const std::vector<double> & vars, const std::vector<int> & layers);
   virtual double fit(const std::vector<double> & vars, const std::vector<int> & layers,
@@ -42,7 +43,8 @@ class LinearizedTrackFitter : public LinearizedTrackFitterBase
   virtual bool initialize(const std::vector<double> & vars, const std::vector<int> & layers,
                           const std::vector<int> & stripIndexes) { return initialize(vars, layers); }
   virtual double fit(const double & chargeOverTwoRho, const double & cotTheta, const double & tgTheta);
-  bool principalCuts(const std::vector<double> & princes);
+  bool principalCuts(const std::vector<double> & princes, const float & preEstimatePt);
+  // bool principalCuts(const std::vector<double> & princes);
 
   double preEstimatedPt_;
   std::vector<double> varsR_;
@@ -60,6 +62,10 @@ class LinearizedTrackFitter : public LinearizedTrackFitterBase
   std::vector<double> secondOrderTerm1_;
   std::vector<double> secondOrderTerm2_;
   std::vector<double> secondOrderTerm3_;
+
+  // Principal component cuts
+  std::vector<float> cuts6Low_;
+  std::vector<float> cuts6High_;
 };
 
 #endif //REMOTEPROJECTS_LINEARIZEDTRACKFITTER_H

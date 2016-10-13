@@ -23,7 +23,8 @@ class LinearizedTrackFitterBase
                             const std::string & preEstimateCotThetaDirName = "",
                             const std::string & linearFitLowPtDirName = "",
                             const std::string & linearFitHighPtDirName = "",
-                            const std::string & linearFitLongitudinalDirName = "");
+                            const std::string & linearFitLongitudinalDirName = "",
+                            const bool alignPrincipals = true);
 
   std::vector<double> estimatedPars() { return estimatedPars_; }
   virtual std::vector<double> principalComponents() { return std::vector<double>(varsNum_, 0.); }
@@ -78,6 +79,7 @@ class LinearizedTrackFitterBase
   std::vector<double> estimatedPars_;
   double rotationFactor_;
   bool negativeZ_;
+  bool alignPrincipals_;
   bool doCutOnPrincipals_;
 
 
@@ -109,6 +111,16 @@ class LinearizedTrackFitterBase
         std::cout << "Error: Matrix for combination = " << index << " not found" << std::endl;
         throw;
       }
+    }
+  }
+
+
+  /// Align the principal components when there are missing variables
+  template <class T>
+  void alignPrincipals(std::vector<T> & principals, const int nDof)
+  {
+    for (int i=0; i<4-nDof; ++i) {
+      principals.insert(principals.begin(), 0);
     }
   }
 };

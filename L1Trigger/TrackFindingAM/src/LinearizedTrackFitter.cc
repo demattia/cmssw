@@ -8,12 +8,16 @@ LinearizedTrackFitter::LinearizedTrackFitter(const std::string & baseDir, const 
                                              const std::string & preEstimateCotThetaDirName,
                                              const std::string & linearFitLowPtDirName,
                                              const std::string & linearFitHighPtDirName,
-                                             const std::string & linearFitLongitudinalDirName) :
+                                             const std::string & linearFitLongitudinalDirName,
+                                             const bool alignPrincipals) :
     LinearizedTrackFitterBase(baseDir, inputExtrapolateR, inputExtrapolatedRPrecision,
                               inputCorrectNonRadialStrips, regionsNumber, doCutOnPrincipals,
                               preEstimatePtDirName, preEstimateCotThetaDirName,
-                              linearFitLowPtDirName, linearFitHighPtDirName, linearFitLongitudinalDirName),
-    preEstimatedPt_(0.)
+                              linearFitLowPtDirName, linearFitHighPtDirName, linearFitLongitudinalDirName,
+                              alignPrincipals),
+    preEstimatedPt_(0.),
+    cuts6Low_{-1., 50., 40., 25., -1., -1., -1, 3, 3., 3., -1., -1.},
+    cuts6High_{-1., 50., 45., 50., -1., -1., -1, 3.5, 3., 3., -1., -1.}
 {
   // Fill all pre-estimates
   fillMatrices(preEstimatePtDirName_, "matrixVD_0_pre_chargeOverPt.txt", &chargeOverPtEstimator_);
@@ -245,7 +249,7 @@ double LinearizedTrackFitter::fit(const double & chargeOverTwoRho, const double 
   estimatedPars_.insert(estimatedPars_.end(), tempPars.begin(), tempPars.end());
 
   if (doCutOnPrincipals_) {
-    if (!principalCuts(normalizedPrincipalComponents())) return -1;
+    if (!principalCuts(normalizedPrincipalComponents(), preEstimatedPt_)) return -1;
   }
 
   return (chi2Transverse_+chi2Longitudinal_)/(ndofTransverse_+ndofLongitudinal_);
@@ -259,7 +263,10 @@ std::vector<double> LinearizedTrackFitter::principalComponents()
   if (preEstimatedPt_ < ptSplitValue_) linearFitTransverse = &(linearFitLowPt_.find(combinationIndex_)->second);
   else linearFitTransverse = &(linearFitHighPt_.find(combinationIndex_)->second);
   principalComponents_ = linearFitTransverse->principalComponents(correctedVarsPhi_);
-  auto tempPrincipalFromZ = linearFitLongitudinal_.find(combinationIndex_)->second.principalComponents(correctedVarsZ_);
+  if (alignPrincipals_) alignPrincipals(principalComponents_, linearFitTransverse->nDof());
+  MatrixReader * linearFitLongitudinal = &(linearFitLongitudinal_.find(combinationIndex_)->second);
+  auto tempPrincipalFromZ = linearFitLongitudinal->principalComponents(correctedVarsZ_);
+  if (alignPrincipals_) alignPrincipals(tempPrincipalFromZ, linearFitLongitudinal->nDof());
   principalComponents_.insert(principalComponents_.end(), tempPrincipalFromZ.begin(), tempPrincipalFromZ.end());
   return principalComponents_;
 }
@@ -272,34 +279,68 @@ std::vector<double> LinearizedTrackFitter::normalizedPrincipalComponents()
   if (preEstimatedPt_ < ptSplitValue_) linearFitTransverse = &(linearFitLowPt_.find(combinationIndex_)->second);
   else linearFitTransverse = &(linearFitHighPt_.find(combinationIndex_)->second);
   normalizedPrincipalComponents_ = linearFitTransverse->normalizedPrincipalComponents(correctedVarsPhi_);
-  auto tempPrincipalFromZ = linearFitLongitudinal_.find(combinationIndex_)->second.normalizedPrincipalComponents(correctedVarsZ_);
+  if (alignPrincipals_) alignPrincipals(normalizedPrincipalComponents_, linearFitTransverse->nDof());
+  MatrixReader * linearFitLongitudinal = &(linearFitLongitudinal_.find(combinationIndex_)->second);
+  auto tempPrincipalFromZ = linearFitLongitudinal->normalizedPrincipalComponents(correctedVarsZ_);
+  if (alignPrincipals_) alignPrincipals(tempPrincipalFromZ, linearFitLongitudinal->nDof());
   normalizedPrincipalComponents_.insert(normalizedPrincipalComponents_.end(), tempPrincipalFromZ.begin(), tempPrincipalFromZ.end());
   return normalizedPrincipalComponents_;
 }
 
 
-bool LinearizedTrackFitter::principalCuts(const std::vector<double> & princes)
+// principal component cut function
+bool LinearizedTrackFitter::principalCuts(const std::vector<double> & princes, const float & preEstimatePt)
 {
-  bool pass=true;
-  const float Cuts6[12]={58.,33.,22.,12.,-1.,-1.,9.,3.,3.,3.,-1.,-1.};
-  const float Cuts5[10]={33.,22.,12.,-1.,-1.,3.,3.,3.,-1.,-1.};
-  if (princes.size()==12) {
+//  std::cout << "preEstimatePt = " << preEstimatePt << std::endl;
+//  std::cout << "principals: ";
+//  for (auto p : princes) {
+//    std::cout << p << ", ";
+//  }
+//  std::cout << std::endl;
+  std::vector<float> * cuts6 = nullptr;
+  // Switch cuts based on preEstimatePt
+  if (preEstimatePt < 10.) cuts6 = &cuts6Low_;
+  else cuts6 = &cuts6High_;
+  if (princes.size() == 12) {
     for (unsigned i = 0; i < princes.size(); ++i) {
-      if (Cuts6[i] == -1) continue;
-      if (fabs(princes[i]) > Cuts6[i]) {
-        pass = false;
-        break;
+      if (cuts6->at(i) == -1) continue;
+      if (fabs(princes[i]) > cuts6->at(i)) {
+//        std::cout << "Fails cut on component " << i << ":" << std::endl;
+//        std::cout << "fabs(princes[i]) > cuts6->at(i) = " << fabs(princes[i]) << " > " << cuts6->at(i) << std::endl;
+        return false;
       }
     }
   }
   else {
-    for (unsigned i = 0; i < princes.size(); ++i) {
-      if (Cuts5[i] == -1) continue;
-      if (fabs(princes[i]) > Cuts5[i]) {
-        pass = false;
-        break;
-      }
-    }
+    std::cout << "Error: not the right format!!!!" << std::endl;
+    throw;
   }
-  return pass;
+  return true;
 }
+
+
+//bool LinearizedTrackFitter::principalCuts(const std::vector<double> & princes)
+//{
+//  bool pass=true;
+//  const float Cuts6[12]={58.,33.,22.,12.,-1.,-1.,9.,3.,3.,3.,-1.,-1.};
+//  const float Cuts5[10]={33.,22.,12.,-1.,-1.,3.,3.,3.,-1.,-1.};
+//  if (princes.size()==12) {
+//    for (unsigned i = 0; i < princes.size(); ++i) {
+//      if (Cuts6[i] == -1) continue;
+//      if (fabs(princes[i]) > Cuts6[i]) {
+//        pass = false;
+//        break;
+//      }
+//    }
+//  }
+//  else {
+//    for (unsigned i = 0; i < princes.size(); ++i) {
+//      if (Cuts5[i] == -1) continue;
+//      if (fabs(princes[i]) > Cuts5[i]) {
+//        pass = false;
+//        break;
+//      }
+//    }
+//  }
+//  return pass;
+//}
