@@ -99,14 +99,14 @@ void CombinationIndexListBuilder::fillDefaultIndexList(std::vector<unsigned long
     layers = std::vector<int>{5, 6, 11, 12, 13, 14};
     radius = std::vector<double>{0., 0., 0., 70., 70., 100.};
     allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
-//     // Region 9
-//     layers = std::vector<int>{5, 6, 11, 12, 14, 15};
-//     radius = std::vector<double>{0., 0., 0., 0., 100., 100.};
-//     allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
-//     // Region 10
-//     layers = std::vector<int>{5, 6, 11, 12, 14, 15};
-//     radius = std::vector<double>{0., 0., 0., 0., 70., 100.};
-//     allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+//    // Region 9
+//    layers = std::vector<int>{5, 6, 11, 12, 14, 15};
+//    radius = std::vector<double>{0., 0., 0., 0., 100., 100.};
+//    allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+//    // Region 10
+//    layers = std::vector<int>{5, 6, 11, 12, 14, 15};
+//    radius = std::vector<double>{0., 0., 0., 0., 70., 100.};
+//    allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
     // Region 9
     layers = std::vector<int>{5, 6, 11, 12, 13, 14};
     radius = std::vector<double>{0., 0., 0., 0., 70., 100.};
@@ -129,58 +129,180 @@ void CombinationIndexListBuilder::fillDefaultIndexList(std::vector<unsigned long
     // Region 14
     radius = std::vector<double>{0., 0., 0., 0., 0., 0.};
     allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+//    // Special combinations to fill small gaps
+//    // ---------------------------------------
+//    // Combination index 17266784
+//    layers = std::vector<int>{5, 6, 11, 12, 13, 14};
+//    radius = std::vector<double>{0., 0., 0., 0., 0., 70.};
+//    allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+//    // Combination index 4274400
+//    layers = std::vector<int>{5, 6, 7, 11, 12, 13,};
+//    radius = std::vector<double>{0., 0., 0., 0., 70., 110.};
+//    allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
 
-    // // Additional combinations for CMSSW AM simulation
-    // // -----------------------------------------------
+    layers = std::vector<int>{5, 6, 7, 8};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
 
-    // // 8513632
-    // layers = std::vector<int>{5, 6, 11, 13, 14, 15};
-    // radius = std::vector<double>{0.0, 0.0, 0.0, 70.0, 110.0, 110.0};
-    // allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+    layers = std::vector<int>{12, 13, 14, 15};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
 
-    // // 8648768
-    // // 8648704 106 [[11, 12, 13, 14, 15], [0.0, 0.0, 70.0, 110.0, 110.0]] <= also included as a 5/6
-    // layers = std::vector<int>{6, 11, 12, 13, 14, 15};
-    // radius = std::vector<double>{0.0, 0.0, 0.0, 70.0, 110.0, 110.0};
-    // allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+    layers = std::vector<int>{11, 12, 13, 14};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
 
-    // // 12644448
-    // layers = std::vector<int>{5, 6, 12, 13, 14, 15};
-    // radius = std::vector<double>{0.0, 0.0, 70.0, 70.0, 110.0, 110.0};
-    // allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+    layers = std::vector<int>{5, 6, 8, 9};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
 
-    // // 12712000
-    // layers = std::vector<int>{6, 11, 12, 13, 14, 15};
-    // radius = std::vector<double>{0.0, 0.0, 70.0, 70.0, 110.0, 110.0};
-    // allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+    layers = std::vector<int>{11, 13, 14, 15};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
 
-    // // 2123872 <- a 5/6 on its own. We may want to include a correponding 6/6 instead
-    // if (fiveOutOfSix) {
-    //   layers = std::vector<int>{5, 6, 11, 13, 14};
-    //   radius = std::vector<double>{0.0, 0.0, 70.0, 110.0, 110.0};
-    //   combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
-    // }
+    layers = std::vector<int>{11, 12, 13, 15};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
 
-    // // 6322272
-    // layers = std::vector<int>{5, 6, 11, 12, 13, 14};
-    // radius = std::vector<double>{0.0, 0.0, 70.0, 70.0, 110.0, 110.0};
-    // allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+    layers = std::vector<int>{6, 7, 8, 9};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
 
-    // // 12711968
-    // layers = std::vector<int>{5, 11, 12, 13, 14, 15};
-    // radius = std::vector<double>{0.0, 0.0, 70.0, 70.0, 110.0, 110.0};
-    // allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+    layers = std::vector<int>{5, 6, 7, 9};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
 
-    // // 8616032
-    // layers = std::vector<int>{5, 6, 11, 12, 13, 14};
-    // radius = std::vector<double>{0.0, 0.0, 0.0, 0.0, 70.0, 110.0};
-    // allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+    layers = std::vector<int>{6, 11, 12, 13, 14};
+    radius = std::vector<double>{0.0, 70.0, 70.0, 110.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
 
-    // // 25425984
-    // // 25425920 135 [[11, 12, 13, 14, 15], [0.0, 0.0, 70.0, 70.0, 110.0]] <- also included as a 5/6
-    // layers = std::vector<int>{6, 11, 12, 13, 14, 15};
-    // radius = std::vector<double>{0.0, 0.0, 0.0, 70.0, 70.0, 110.0};
-    // allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
+    layers = std::vector<int>{5, 6, 11, 12, 13, 14};
+    radius = std::vector<double>{0.0, 0.0, 70.0, 70.0, 110.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 11, 12, 13, 14};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0, 0.0, 70.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{6, 11, 12, 13, 14};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0, 70.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{11, 12, 14, 15};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 7, 11};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 7, 8, 9};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 8, 11};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 11, 12, 13, 14};
+    radius = std::vector<double>{0.0, 70.0, 70.0, 110.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{6, 7, 8, 11};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 11, 13, 14};
+    radius = std::vector<double>{0.0, 0.0, 70.0, 110.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 7, 12};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 7, 8, 11};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 11, 12, 13};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 11, 12, 14};
+    radius = std::vector<double>{0.0, 0.0, 70.0, 70.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 8, 11, 12, 13};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 70.0, 110.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 12, 13, 14};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0, 70.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{11, 12, 13, 14, 15};
+    radius = std::vector<double>{0.0, 0.0, 70.0, 70.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 11, 13};
+    radius = std::vector<double>{0.0, 0.0, 70.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 11, 13, 14};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0, 70.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 7, 11};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 70.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{6, 11, 12, 13};
+    radius = std::vector<double>{0.0, 70.0, 70.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 11, 12};
+    radius = std::vector<double>{0.0, 0.0, 70.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 12, 13};
+    radius = std::vector<double>{0.0, 0.0, 70.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 11, 12};
+    radius = std::vector<double>{0.0, 0.0, 110.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 11, 12};
+    radius = std::vector<double>{0.0, 0.0, 70.0, 70.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 11, 12, 13, 14, 15};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 70.0, 70.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 12, 13, 14};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 7, 8, 12, 13};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0, 110.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{6, 7, 8, 11, 12, 13};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 70.0, 110.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{6, 7, 11, 12};
+    radius = std::vector<double>{0.0, 0.0, 70.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 6, 7, 8, 11, 13};
+    radius = std::vector<double>{0.0, 0.0, 0.0, 0.0, 70.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
+
+    layers = std::vector<int>{5, 12, 13, 14, 15};
+    radius = std::vector<double>{0.0, 0.0, 70.0, 70.0, 110.0};
+    combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));
   }
   else {
     std::cout << "Error: allowed number of regions are 9 and 14. Number of regions requested = " << regionsNumber << std::endl;

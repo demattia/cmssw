@@ -76,6 +76,52 @@ TTTracksFromCBswStubs   = cms.Sequence(TTTracksTAMUFromCB*MergeFITCBOutput*TTStu
 
 DuplicateRemovalTAMUswStubs   = cms.Sequence(DuplicateRemovalTAMU*MergeDROutput*TTStubAssociatorFromPixelDigis*TTTrackAssociatorFromPixelDigis)
 
+# Full chain for CB
+TTStubAssociatorFromPixelDigisCB = TTStubAssociatorFromPixelDigis.clone(
+    TTStubs = cms.VInputTag( cms.InputTag("MergeCBOutput", "StubInCB")),
+    TTClusterTruth = cms.VInputTag( cms.InputTag("TTClusterAssociatorFromPixelDigis","ClusterAccepted"))
+)
+TTTrackAssociatorFromPixelDigisCB = TTTrackAssociatorFromPixelDigis.clone(
+    TTTracks = cms.VInputTag( cms.InputTag("MergeCBOutput", "AML1CBs"))
+)
+
+TTStubAssociatorFromPixelDigisCBFIT = TTStubAssociatorFromPixelDigis.clone(
+    TTStubs = cms.VInputTag( cms.InputTag("MergeFITCBOutput", "StubInTrack")),
+    TTClusterTruth = cms.VInputTag( cms.InputTag("TTClusterAssociatorFromPixelDigis","ClusterAccepted"))
+)
+TTTrackAssociatorFromPixelDigisCBFIT = TTTrackAssociatorFromPixelDigis.clone(
+    TTTracks = cms.VInputTag( cms.InputTag("MergeFITCBOutput", "AML1Tracks"))
+)
+
+TTStubAssociatorFromPixelDigisDR = TTStubAssociatorFromPixelDigis.clone(
+    TTStubs = cms.VInputTag( cms.InputTag("MergeDROutput", "StubInTrack")),
+    TTClusterTruth = cms.VInputTag( cms.InputTag("TTClusterAssociatorFromPixelDigis","ClusterAccepted"))
+)
+TTTrackAssociatorFromPixelDigisDR = TTTrackAssociatorFromPixelDigis.clone(
+    TTTracks = cms.VInputTag( cms.InputTag("MergeDROutput", "AML1Tracks"))
+)
+
+TT_CB_FIT_DR_FromPatternswStubs = cms.Sequence(TTCBsFromPattern*MergeCBOutput*TTStubAssociatorFromPixelDigisCB*TTTrackAssociatorFromPixelDigisCB*TTTracksTAMUFromCB*MergeFITCBOutput*TTStubAssociatorFromPixelDigisCBFIT*TTTrackAssociatorFromPixelDigisCBFIT*DuplicateRemovalTAMU*MergeDROutput*TTStubAssociatorFromPixelDigisDR*TTTrackAssociatorFromPixelDigisDR)
+
+# Full chain for TC
+TTStubAssociatorFromPixelDigisTC = TTStubAssociatorFromPixelDigis.clone(
+    TTStubs = cms.VInputTag( cms.InputTag("MergeTCOutput", "StubInTC")),
+    TTClusterTruth = cms.VInputTag( cms.InputTag("TTClusterAssociatorFromPixelDigis","ClusterAccepted"))
+)
+TTTrackAssociatorFromPixelDigisTC = TTTrackAssociatorFromPixelDigis.clone(
+    TTTracks = cms.VInputTag( cms.InputTag("MergeTCOutput", "AML1TCs"))
+)
+
+TTStubAssociatorFromPixelDigisFIT = TTStubAssociatorFromPixelDigis.clone(
+    TTStubs = cms.VInputTag( cms.InputTag("MergeFITOutput", "StubInTrack")),
+    TTClusterTruth = cms.VInputTag( cms.InputTag("TTClusterAssociatorFromPixelDigis","ClusterAccepted"))
+)
+TTTrackAssociatorFromPixelDigisFIT = TTTrackAssociatorFromPixelDigis.clone(
+    TTTracks = cms.VInputTag( cms.InputTag("MergeFITOutput", "AML1Tracks"))
+)
+
+TT_TC_FIT_DR_FromPatternswStubs = cms.Sequence(TTTCsFromPattern*MergeTCOutput*MergeTCOutputb*TTStubAssociatorFromPixelDigisTC*TTTrackAssociatorFromPixelDigisTC*TTTracksTAMUFromTC*MergeFITOutput*TTStubAssociatorFromPixelDigisFIT*TTTrackAssociatorFromPixelDigisFIT*DuplicateRemovalTAMU*MergeDROutput*TTStubAssociatorFromPixelDigisDR*TTTrackAssociatorFromPixelDigisDR)
+
 ############################################
 # STEP 4: MERGE PR outputs
 ############################################

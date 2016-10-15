@@ -56,12 +56,11 @@ TTTracksTAMUFromCB = ( cms.EDProducer("AMTrackProducer",
 
 DuplicateRemovalTAMU = ( cms.EDProducer("TrackFitDRProducer",
                                         TTTrackName        = cms.InputTag("MergeFITCBOutput", "AML1Tracks"),
-                                        CleanedTTTrackName = cms.string("CleanedAML1Tracks"),
+                                        CleanedTTTrackName = cms.string("AML1Tracks"),
                                         ParameterBased     = cms.bool(False),
                                         MaxCommonStubs     = cms.uint32(2)
                                         )
                      )
-
 
 # AM output merging sequence
 MergePROutput = cms.EDProducer("AMOutputMerger",
@@ -121,8 +120,8 @@ MergeFITCBOutput = cms.EDProducer("AMOutputMerger",
 MergeDROutput = cms.EDProducer("AMOutputMerger",
    TTInputClusters     = cms.InputTag("TTStubsFromPixelDigis", "ClusterAccepted"),
    TTInputStubs        = cms.InputTag("TTStubsFromPixelDigis", "StubAccepted"),
-   TTInputPatterns     = cms.VInputTag(cms.InputTag("DuplicateRemovalTAMU", "CleanedAML1Tracks")),
+   TTInputPatterns     = cms.VInputTag(cms.InputTag("DuplicateRemovalTAMU", "AML1Tracks")),
    TTFiltClustersName  = cms.string("ClusInTrack"),
    TTFiltStubsName     = cms.string("StubInTrack"),
-   TTPatternsName      = cms.string("CleanedAML1Tracks")
+   TTPatternsName      = cms.string("AML1Tracks")
 )

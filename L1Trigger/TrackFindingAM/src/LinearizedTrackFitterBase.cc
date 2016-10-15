@@ -64,8 +64,8 @@ LinearizedTrackFitterBase::LinearizedTrackFitterBase(const std::string & baseDir
 
 bool LinearizedTrackFitterBase::consistencyCheck(const std::vector<double> & vars, const std::vector<int> & layers)
 {
-  if (vars.size() < 15) {
-    std::cout << "Error: number of input variables is less than 15. Please provide 5 or 6 sets of (phi, R, z) ordered from the innermost to the outermost layer." << std::endl;
+  if (vars.size() < 12) {
+    std::cout << "Error: number of input variables is less than 12. Please provide 4, 5 or 6 sets of (phi, R, z) ordered from the innermost to the outermost layer." << std::endl;
     std::cout << "Number of input variables = " << vars.size() << std::endl;
     // throw;
     return false;

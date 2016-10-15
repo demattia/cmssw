@@ -141,7 +141,7 @@ void AMTrackProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSetup)
         // std::cout << "z = " << posStub.z() << std::endl;
       }
       //which layers are hit 
-      if (layers.size() < 5)continue;
+      if (layers.size() < 4)continue;
       // int bits=0;
       // if(layers[0]!=5)bits=1;
       // if(layers[0]==5 && layers[1]==7)bits=2;
@@ -154,6 +154,13 @@ void AMTrackProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSetup)
       // for (auto l : layers) std::cout << l << ", ";
       // std::cout << std::endl;
       double normChi2 = linearizedTrackFitter_->fit(vars, layers);
+      // if (layers.size() == 4) {
+      // 	if (normChi2 != -1) {
+      // 	  std::cout << std::cout << "4-layers track: ";
+      // 	  for (auto l : layers) std::cout << l << " ";
+      // 	}
+      // 	std::cout << std::endl;
+      // }
       // chi2/ndf = -1 means the fit did not run on this combination. Either because it has < 5 stubs
       // or beacuse it is a combination for which coefficients are not available.
       if (normChi2 == -1) {
