@@ -129,17 +129,9 @@ void CombinationIndexListBuilder::fillDefaultIndexList(std::vector<unsigned long
     // Region 14
     radius = std::vector<double>{0., 0., 0., 0., 0., 0.};
     allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
-//    // Special combinations to fill small gaps
-//    // ---------------------------------------
-//    // Combination index 17266784
-//    layers = std::vector<int>{5, 6, 11, 12, 13, 14};
-//    radius = std::vector<double>{0., 0., 0., 0., 0., 70.};
-//    allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
-//    // Combination index 4274400
-//    layers = std::vector<int>{5, 6, 7, 11, 12, 13,};
-//    radius = std::vector<double>{0., 0., 0., 0., 70., 110.};
-//    allCombinationIndexes(layers, radius, combinationIndexList, fiveOutOfSix, regionsNumber);
 
+    // Special combinations to fill small gaps
+    // ---------------------------------------
     layers = std::vector<int>{5, 6, 7, 8};
     radius = std::vector<double>{0.0, 0.0, 0.0, 0.0};
     combinationIndexList.push_back(combinationIndex(layers, radius, regionsNumber));

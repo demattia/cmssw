@@ -1,0 +1,68 @@
+8
+2
+
+3162.277660168379
+3162.277660168379
+3162.277660168379
+3162.277660168379
+3162.277660168379
+3162.277660168379
+3162.277660168379
+3162.277660168379
+
+1 0 0 0 0 0 0 0
+0 1 0 0 0 0 0 0
+0 0 1 0 0 0 0 0
+0 0 0 1 0 0 0 0
+0 0 0 0 1 0 0 0
+0 0 0 0 0 1 0 0
+0 0 0 0 0 0 1 0
+0 0 0 0 0 0 0 1
+
+23.32162606648477
+74.88027191162109
+34.76816699802727
+114.3012771606445
+  47.269670531432
+157.4149932861328
+74.60717608864539
+258.5499877929688
+
+ 3.441652712897843
+0.2905580787545552
+
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+
+cov:
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+
+cov.inverse():
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan inf
+
+cov*(cov_.inverse()):
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
+nan nan nan nan nan nan nan nan
