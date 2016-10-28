@@ -92,7 +92,12 @@ bool LinearizedTrackFitter::initialize(const std::vector<double> & vars, const s
     if (vars[i*3+2] > 0.) negativeZ_ = false;
   }
 
-  for (unsigned int i=0; i<varsNum_; ++i) { correctedVarsPhi_(i) = vars[i*3] - rotationFactor_; }
+  for (unsigned int i=0; i<varsNum_; ++i) {
+    // correctedVarsPhi_(i) = vars[i*3] - rotationFactor_; }
+    if (rotationFactor_ < -1.2 && vars[i*3] > 0.) correctedVarsPhi_(i) = vars[i*3]-2*M_PI - rotationFactor_;
+    else if (rotationFactor_ > 1.2 && vars[i*3] < 0.) correctedVarsPhi_(i) = vars[i*3]+2*M_PI - rotationFactor_;
+    else correctedVarsPhi_(i) = vars[i*3] - rotationFactor_;
+  }
   for (unsigned int i=0; i<varsNum_; ++i) { varsR_.push_back(vars[i*3+1]); }
   for (unsigned int i=0; i<varsNum_; ++i) { correctedVarsZ_(i) = (negativeZ_ ? -vars[i*3+2] : vars[i*3+2]); }
   extrapolatedR_ = varsR_;
