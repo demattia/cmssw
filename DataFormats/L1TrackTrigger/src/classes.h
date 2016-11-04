@@ -11,6 +11,7 @@
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
 #include "DataFormats/L1TrackTrigger/interface/TTTypes.h"
 #include "DataFormats/L1TrackTrigger/interface/TTPixelTrack.h"
+#include "DataFormats/L1TrackTrigger/interface/TTTrackExtra.h"
 
 // includes needed for the L1TrackTriggerObjects
 
@@ -84,6 +85,18 @@ namespace
     std::vector< edm::Ptr< TTTrack< Ref_PixelDigi_ > > >                   V_P_T_PD;
     edm::Ref< std::vector < TTTrack< Ref_PixelDigi_ > > >                   R_V_T_PD;
     edm::Wrapper< std::vector< edm::Ptr< TTTrack< Ref_PixelDigi_ > > > > W_V_P_T_PD;
+
+    /// TTTrackExtra and containers
+    TTTrackExtra< Ref_PixelDigi_ >                                    TE_PD;
+    std::vector< TTTrackExtra< Ref_PixelDigi_ > >                   V_TE_PD;
+    edm::Wrapper< std::vector< TTTrackExtra< Ref_PixelDigi_ > > > W_V_TE_PD;
+
+    /// edm::Ptr to TTTrackExtra and containers
+    edm::Ptr< TTTrackExtra< Ref_PixelDigi_ > >                                    P_TE_PD;
+    edm::Wrapper< edm::Ptr< TTTrackExtra< Ref_PixelDigi_ > > >                  W_P_TE_PD;
+    std::vector< edm::Ptr< TTTrackExtra< Ref_PixelDigi_ > > >                   V_P_TE_PD;
+    edm::Ref< std::vector < TTTrackExtra< Ref_PixelDigi_ > > >                   R_V_TE_PD;
+    edm::Wrapper< std::vector< edm::Ptr< TTTrackExtra< Ref_PixelDigi_ > > > > W_V_P_TE_PD;
 
     /// TTPixelTrack and containers
     TTPixelTrack                                                TT_PT;

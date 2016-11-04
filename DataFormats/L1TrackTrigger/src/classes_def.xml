@@ -41,6 +41,16 @@
   <class pattern="edm::Wrapper<edm::Ptr<TTTrack<*>>>" />
   <class pattern="edm::Wrapper<std::vector<edm::Ptr<TTTrack<*>>>>" />
 
+  <class pattern="TTTrackExtra<*>" />
+  <class pattern="std::vector<TTTrackExtra<*>>" />
+  <class pattern="edm::Wrapper<std::vector<TTTrackExtra<*>>>" />
+
+  <class pattern="edm::Ptr<TTTrackExtra<*>>" />
+  <class pattern="std::vector<edm::Ptr<TTTrackExtra<*>>>" />
+  <class pattern="edm::Ref<std::vector<TTTrackExtra<*>>>" />
+  <class pattern="edm::Wrapper<edm::Ptr<TTTrackExtra<*>>>" />
+  <class pattern="edm::Wrapper<std::vector<edm::Ptr<TTTrackExtra<*>>>>" />
+
   <class pattern="TTPixelTrack" />
   <class pattern="std::vector<TTPixelTrack>" />
   <class pattern="edm::Wrapper<std::vector<TTPixelTrack>>" />

@@ -58,6 +58,7 @@ class AMOutputMerger : public edm::EDProducer
   edm::InputTag                 TTStubsInputTag;
   std::string                   TTStubOutputTag;
   std::vector< edm::InputTag >  TTPatternsInputTags;
+  std::vector< edm::InputTag >  TTPatternsExtraInputTags;
   std::string                   TTPatternOutputTag;
   std::vector<int>              stored_IDs;
 
@@ -78,6 +79,7 @@ AMOutputMerger::AMOutputMerger( const edm::ParameterSet& iConfig )
   TTClustersInputTag  = iConfig.getParameter< edm::InputTag >( "TTInputClusters" );
   TTStubsInputTag     = iConfig.getParameter< edm::InputTag >( "TTInputStubs" );
   TTPatternsInputTags = iConfig.getParameter< std::vector< edm::InputTag > >( "TTInputPatterns" );
+  TTPatternsExtraInputTags = iConfig.getParameter< std::vector< edm::InputTag > >( "TTInputPatternsExtra" );
 
   TTStubOutputTag     = iConfig.getParameter< std::string >( "TTFiltStubsName" );
   TTPatternOutputTag  = iConfig.getParameter< std::string >( "TTPatternsName" );
