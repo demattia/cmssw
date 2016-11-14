@@ -16,6 +16,7 @@
 #include "DataFormats/L1TrackTrigger/interface/TTStub.h"
 #include "DataFormats/SiPixelDetId/interface/StackedTrackerDetId.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include <vector>
 
 
 template< typename T >
@@ -39,6 +40,10 @@ class TTTrack
     double       theChi25Par;
     bool         valid4ParFit;
     bool         valid5ParFit;
+    edm::Ref<std::vector<TTTrack<T> > > roadRef_;
+    std::vector<int> layers_;
+    std::vector<double> principals_;
+    double preEstimatePt_;
 
   public:
     /// Constructors
@@ -81,6 +86,15 @@ class TTTrack
     void         setStubPtConsistency( double aPtConsistency, unsigned int nPar=5 );
 
     void         setFitParNo( unsigned int aFitParNo ) { return; }
+
+    void setRoadRef(const edm::Ref<std::vector<TTTrack<T> > > & road) { roadRef_ = road; }
+    void setLayers(const std::vector<int> & inputLayers) { layers_ = inputLayers; }
+    void setPrincipals(const std::vector<double> & inputPrincipals) { principals_ = inputPrincipals; }
+    void setPreEstimatePt(const double & inputPreEstimatePt) { preEstimatePt_ = inputPreEstimatePt; }
+    edm::Ref<std::vector<TTTrack<T> > > roadRef() const { return roadRef_; }
+    std::vector<int> layers() const { return layers_; }
+    std::vector<double> principals() const { return principals_; }
+    double preEstimatePt() const { return preEstimatePt_; }
 
 /*
     /// Superstrip
@@ -130,6 +144,7 @@ TTTrack< T >::TTTrack()
   theStubPtConsistency5Par = 0.0;
   valid4ParFit    = false;
   valid5ParFit    = false;
+  preEstimatePt_  = 0.;
 }
 
 /// Another Constructor
@@ -152,6 +167,7 @@ TTTrack< T >::TTTrack( std::vector< edm::Ref< edmNew::DetSetVector< TTStub< T > 
   theStubPtConsistency5Par = 0.0;
   valid4ParFit    = false;
   valid5ParFit    = false;
+  preEstimatePt_  = 0.;
 }
 
 /// Destructor

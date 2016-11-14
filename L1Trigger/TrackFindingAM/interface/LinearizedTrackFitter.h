@@ -32,6 +32,7 @@ class LinearizedTrackFitter : public LinearizedTrackFitterBase
   double fit(const std::vector<double> & vars, const int bits);
   virtual std::vector<double> principalComponents();
   virtual std::vector<double> normalizedPrincipalComponents();
+  double preEstimatedPt() const { return preEstimatedPt_; }
 
   std::vector<double> getFirstOrderTerm() { return firstOrderTerm_; }
   std::vector<double> getSecondOrderTerm1() { return secondOrderTerm1_; }

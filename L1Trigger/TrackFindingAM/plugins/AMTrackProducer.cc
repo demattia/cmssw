@@ -187,6 +187,10 @@ void AMTrackProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSetup)
       aTrack.setChi2(normChi2);
       GlobalPoint POCA(0, 0, pars[3]);
       aTrack.setPOCA(POCA);
+      aTrack.setRoadRef(tempTrackPtr->roadRef());
+      aTrack.setPrincipals(linearizedTrackFitter_->normalizedPrincipalComponents());
+      aTrack.setPreEstimatePt(linearizedTrackFitter_->preEstimatedPt());
+      aTrack.setLayers(layers);
       L1TkTracksForOutput->push_back(aTrack);
     }
   }
