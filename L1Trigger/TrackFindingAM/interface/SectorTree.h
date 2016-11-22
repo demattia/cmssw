@@ -12,7 +12,10 @@
 #include "PrincipalTrackFitter.h"
 #include "KarimakiTrackFitter.h"
 #include "HoughFitter.h"
+#include "SeedClusteringFitter.h"
 #include "RetinaTrackFitter.h"
+#include "PCATrackFitter.h"
+#include "TCBuilder.h"
 
 #ifdef IPNL_USE_CUDA
 #include "gpu_struct.h"
@@ -41,7 +44,8 @@ class SectorTree{
      \brief used to know the superstrip size used for the patterns contained in this sectorTree.
      This value is not used inside the class.
   **/
-  int superStripSize;
+  static map<string, int> superstripSize_lut;
+  static string ss_size_filename;
 
   void updateSectorMap();
 
@@ -49,12 +53,18 @@ class SectorTree{
   
   template<class Archive> void save(Archive & ar, const unsigned int version) const{
     ar << sector_list;
-    ar << superStripSize;
+    ar & SectorTree::superstripSize_lut;
   }
   
   template<class Archive> void load(Archive & ar, const unsigned int version){
-    ar >> sector_list;
-    ar >> superStripSize;
+    if(version>1){
+      ar >> sector_list;
+      ar >> superstripSize_lut;
+    }
+    else{
+      cout<<"This PBK file format is too old and not compatible with this version of the software."<<endl;
+      exit(-1);
+    }
   }
   
   BOOST_SERIALIZATION_SPLIT_MEMBER()
@@ -64,6 +74,10 @@ class SectorTree{
      \brief Constructor
   **/
   SectorTree();
+  /**
+     \brief Constructor by copy : only copy the superstrip sizes
+  **/
+  SectorTree(const SectorTree& st);
   /**
      \brief Destructor
   **/
@@ -101,9 +115,9 @@ class SectorTree{
   int getFDPatternNumber();
   /**
      \brief Replace all LD patterns with adapatative patterns. All FD patterns are removed.
-     \param r The number of DC bits used between FD and LD
+     \param r The number of DC bits used between FD and LD for each layer ID
   **/
-  void computeAdaptativePatterns(short r);
+  void computeAdaptativePatterns(map<int, int> r);
   /**
      Link all the patterns contained in each sector to the super strips contained in the Detector object
      \param d The Detector object
@@ -120,29 +134,41 @@ class SectorTree{
   /**
      \brief Get the active patterns in each sector
      \param active_threshold The minimum number of hit super strips to activate the pattern
+     \param max_nb_roads The maximum number of output roads : additional roads will be deleted
      \return A vector containing pointers on copies of the sectors, each sectors containing its active patterns
   **/
-  vector<Sector*> getActivePatternsPerSector(int active_threshold);
+  vector<Sector*> getActivePatternsPerSector(int active_threshold, unsigned int max_nb_roads=1000000);
 
   /**
      \brief Get the active patterns in each sector
      \param max_nb_missing_hit The maximum number of non active layers to activate the pattern
      \param active_threshold The minimum number of hit super strips to activate the pattern
+     \param max_nb_roads The maximum number of output roads : additional roads will be deleted
      \return A vector containing pointers on copies of the sectors, each sectors containing its active patterns
   **/
-  vector<Sector*> getActivePatternsPerSectorUsingMissingHit(int max_nb_missing_hit, int active_threshold);
+  vector<Sector*> getActivePatternsPerSectorUsingMissingHit(int max_nb_missing_hit, int active_threshold, unsigned int max_nb_roads=1000000);
 
   /**
      \brief Retrieve the superstrip size used for the patterns inside the SectorTree
+     \param layer_id The ID of the layer for which you want the superstrip size (0 for default).If the ID is not know, returns the default value.
      \return -1 if not specified, the superStrip size otherwise.
   **/
-  int getSuperStripSize();
+  static int getSuperstripSize(int layer_id=0, int ladder_id=0);
+
+  static map< string, int > loadSStripSizeLUT(string name);
 
   /**
-     \brief Set the size of the superStrip used in the patterns stored in the SectorTree
-     \param s The superStrip size (should be greater than 0)
-  **/
-  void setSuperStripSize(int s);
+     \brief Returns the list of layer IDs for which a superstrip size is defined
+     \return A vector containing the list of layer IDs
+   **/
+  // static vector<int> getSuperStripSizeLayers();
+  
+  bool hasSameSuperstripSizes(const SectorTree& st);
+
+  map<string, int> getSuperstripSize_lut();
+
+  static void displaySuperstripSizes();
+  static void setSuperstripSizeFile(string fileName);
 
   /**
      \brief Get the number of sectors in the SectorTree
@@ -150,4 +176,5 @@ class SectorTree{
   int getNbSectors();
 
 };
+BOOST_CLASS_VERSION(SectorTree, 2)
 #endif

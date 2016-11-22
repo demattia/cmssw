@@ -353,7 +353,7 @@ void TrackFitRetinaProducer::produce( edm::Event& iEvent, const edm::EventSetup&
 	  }
 
 	  Hit* h = new Hit(layer,ladder, module, segment, strip, 
-			   jreal, tp, spt, ip, eta, phi0, x, y, z, x0, y0, z0);
+			   jreal, tp, spt, ip, eta, phi0, x, y, z, x0, y0, z0, tempStubRef->getTriggerDisplacement()-tempStubRef->getTriggerOffset());
 	  m_hits->push_back(h);
 
 	}

@@ -11,16 +11,19 @@ class Layer{
 
  private:
   vector<Ladder*> ladders;
+  bool isBarrelLayer;
   
  public:
   /**
      \brief Constructor
      \param nbLad Number of ladders on this layer
      \param nbMod Number of modules on each ladder
+     \param nbSeg Number of segments on each module
      \param segmentSize Number of strips in a segment
      \param sstripSize Number of strips in a super strip
+     \param isBarrel True if it's a barrel layer
   **/
-  Layer(int nbLad, int nbMod, int segmentSize, int sstripSize);
+  Layer(int nbLad, int nbMod, int nbSeg, int segmentSize, int sstripSize, bool isBarrel);
   /**
      \brief Destructor
   **/
@@ -35,6 +38,8 @@ class Layer{
      \brief Desactivates all the superstrips in the layer.
   **/
   void clear();
+
+  bool isBarrel();
 
 };
 #endif

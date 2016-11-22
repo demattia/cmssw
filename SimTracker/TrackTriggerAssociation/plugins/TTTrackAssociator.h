@@ -130,6 +130,8 @@ void TTTrackAssociator< T >::produce( edm::Event& iEvent, const edm::EventSetup&
     trackingParticleToTrackVectorMap.clear();
 
 
+    // Start the loop on tracks
+
     unsigned int j = 0; /// Counter needed to build the edm::Ptr to the TTTrack
     typename std::vector< TTTrack< T > >::const_iterator inputIter;
     for ( inputIter = TTTrackHandle->begin();
@@ -139,13 +141,13 @@ void TTTrackAssociator< T >::produce( edm::Event& iEvent, const edm::EventSetup&
       /// Make the pointer to be put in the map
       edm::Ptr< TTTrack< T > > tempTrackPtr( TTTrackHandle, j++ );
 
-      /// Get the stubs
+      /// Get the stubs of the TTTrack (theseStubs)
       std::vector< edm::Ref< edmNew::DetSetVector< TTStub< T > >, TTStub< T > > > theseStubs = tempTrackPtr->getStubRefs();
 
       /// Auxiliary map to store TP addresses and TP edm::Ptr
       std::map< const TrackingParticle*, edm::Ptr< TrackingParticle > > auxMap;
       auxMap.clear();
-      bool mayCombinUnknown = false;
+      int mayCombinUnknown = 0;
 
       /// Fill the inclusive map which is careless of the stub classification
       for ( unsigned int is = 0; is < theseStubs.size(); is++ )
@@ -154,11 +156,11 @@ void TTTrackAssociator< T >::produce( edm::Event& iEvent, const edm::EventSetup&
         for ( unsigned int ic = 0; ic < 2; ic++ )
         {
           std::vector< edm::Ptr< TrackingParticle > > tempTPs = TTClusterAssociationMapHandle->findTrackingParticlePtrs( theseClusters.at(ic) );
-          for ( unsigned int itp = 0; itp < tempTPs.size(); itp++ )
+          for ( unsigned int itp = 0; itp < tempTPs.size(); itp++ ) // List of TPs linked to stub clusters
           {
             edm::Ptr< TrackingParticle > testTP = tempTPs.at(itp);
 
-            if ( testTP.isNull() )
+            if ( testTP.isNull() ) // No TP linked to this cluster
               continue;
 
             /// Prepare the maps wrt TrackingParticle
@@ -180,19 +182,23 @@ void TTTrackAssociator< T >::produce( edm::Event& iEvent, const edm::EventSetup&
         } /// End of loop over the clusters
 
         /// Check if the stub is unknown
-        if ( TTStubAssociationMapHandle->isUnknown( theseStubs.at(is) ) )
-          mayCombinUnknown = true;
+	if ( TTStubAssociationMapHandle->isUnknown( theseStubs.at(is) ) )
+	  ++mayCombinUnknown;
 
       } /// End of loop over the stubs
 
-      /// If there is an unknown stub, go to the next track
+      /// If there more than 2 unknown stubs, go to the next track
       /// as this track may be COMBINATORIC or UNKNOWN
-      if ( mayCombinUnknown )
-        continue;
+      if ( mayCombinUnknown >= 2 )
+      	continue;
 
       /// If we are here, all the stubs are either combinatoric or genuine
-      /// Loop over all the TrackingParticle
+      /// and there is no more than one fake stub in the track
+      /// Loop over all the TrackingParticle which have been found in the track at some point
+      /// (stored in auxMap)
+
       std::vector< const TrackingParticle* > tpInAllStubs;
+
       std::map< const TrackingParticle*, edm::Ptr< TrackingParticle > >::const_iterator iterAuxMap;
       for ( iterAuxMap = auxMap.begin();
             iterAuxMap != auxMap.end();
@@ -201,9 +207,11 @@ void TTTrackAssociator< T >::produce( edm::Event& iEvent, const edm::EventSetup&
         /// Get all the stubs from this TrackingParticle
         std::vector< edm::Ref< edmNew::DetSetVector< TTStub< T > >, TTStub< T > > > tempStubs = TTStubAssociationMapHandle->findTTStubRefs( iterAuxMap->second );
 
-        bool allFound = true;
+	int nnotfound=0;
+        //bool allFound = true;
         /// Loop over the stubs
-        for ( unsigned int js = 0; js < theseStubs.size() && allFound; js++ )
+	//        for ( unsigned int js = 0; js < theseStubs.size() && allFound; js++ )
+        for ( unsigned int js = 0; js < theseStubs.size(); js++ )
         {
           /// We want that all the stubs of the track are included in the container of
           /// all the stubs produced by this particular TrackingParticle which we
@@ -211,17 +219,19 @@ void TTTrackAssociator< T >::produce( edm::Event& iEvent, const edm::EventSetup&
           /// in this track we are evaluating right now
           if ( std::find( tempStubs.begin(), tempStubs.end(), theseStubs.at(js) ) == tempStubs.end() )
           {
-            allFound = false;
+	    //  allFound = false;
+	    ++nnotfound;
           }
         }
 
-        /// If the TrackingParticle does not appear in all stubs
+        /// If the TrackingParticle does not appear in all stubs but one
         /// then go to the next track
-        if ( !allFound )
-          continue;
+        if (nnotfound>1)
+	  //if (!allFound)
+	  continue;
 
         /// If we are here, it means that the TrackingParticle
-        /// generates hits in all stubs of the current track
+        /// generates hits in all stubs but one of the current track
         /// so put it into the vector
         tpInAllStubs.push_back( iterAuxMap->first );
       }
@@ -232,9 +242,12 @@ void TTTrackAssociator< T >::produce( edm::Event& iEvent, const edm::EventSetup&
       unsigned int nTPs = tpInAllStubs.size();
 
       /// If only one TrackingParticle, GENUINE
-      /// if more than one, COMBINATORIC
+      /// if different than one, COMBINATORIC
       if ( nTPs != 1 )
+      {
         continue;
+	if (nTPs>1) std::cout << "This should never happen!!!" << std::endl;
+      }
 
       /// Here, the track may only be GENUINE
       /// Fill the map

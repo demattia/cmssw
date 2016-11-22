@@ -19,7 +19,7 @@
 
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process('AMPRBASE')
+process = cms.Process('AMPRBASENUM')
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
@@ -52,7 +52,7 @@ process.TTPatternsFromStub.inputBankFile              = cms.string('BANKFILENAME
 process.TTPatternsFromStub.threshold                  = cms.int32(THRESHOLD)
 process.TTPatternsFromStub.nbMissingHits              = cms.int32(NBMISSHIT)
 process.TTPatternsFromStub.TTPatternName              = cms.string('PATTCONT')
-
+process.TTPatternsFromStub.debugMode                  = cms.int32(0)
 
 process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
     splitLevel = cms.untracked.int32(0),

@@ -5,27 +5,28 @@
 #include <vector>
 
 /**
-\brief Representation of a Module (2 segments)
+\brief Representation of a Module (made of segments)
 **/
 class Module{
 
  private:
-  Segment* segments[2];
+  vector<Segment*> segments;
   
  public:
   /**
      \brief Constructor
+     \param nbSeg Number of segments in the module
      \param segmentSize Number of strips in a segment
      \param sstripSize Number of strips in a super strip
   **/
-  Module(int segmentSize, int sstripSize);
+  Module(int nbSeg, int segmentSize, int sstripSize);
   /**
      \brief Destructor
   **/
   ~Module();
   /**
      \brief Retrieves on of the segment in the module
-     \param n The position of the segment (0 or 1).
+     \param n The position of the segment.(0 to N)
      \return A pointer on the Segment (not a copy), NULL if not found.
   **/
   Segment* getSegment(int n);

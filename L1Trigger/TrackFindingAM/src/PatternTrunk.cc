@@ -63,12 +63,16 @@ float PatternTrunk::getLDPatternPT(){
   return lowDefPattern->getAveragePt();
 }
 
+int PatternTrunk::getLDPatternGrade() const{
+  return lowDefPattern->getGrade();
+}
+
 int PatternTrunk::getFDPatternNumber(){
   return fullDefPatterns.size();
 }
 
-void PatternTrunk::link(Detector& d, const vector< vector<int> >& sec, const vector<map<int, vector<int> > >& modules){
-  lowDefPattern->link(d, sec, modules);
+void PatternTrunk::link(Detector& d){
+  lowDefPattern->link(d);
 }
 
 #ifdef IPNL_USE_CUDA
@@ -98,25 +102,25 @@ void PatternTrunk::deleteFDPatterns(){
   fullDefPatterns.clear();
 }
 
-void PatternTrunk::computeAdaptativePattern(short r){
+void PatternTrunk::computeAdaptativePattern(vector<int> r){
   int nb_layers = lowDefPattern->getNbLayers();
   for(int i=0;i<nb_layers;i++){
     
     PatternLayer* pl = lowDefPattern->getLayerStrip(i);
     int last_bits=0;
-    vector<int> bits(r,0);
+    vector<int> bits(r[i],0);
 
     for(map<string, GradedPattern*>::iterator itr = fullDefPatterns.begin(); itr != fullDefPatterns.end(); ++itr){
       PatternLayer* fd_pl = itr->second->getLayerStrip(i);
       last_bits = fd_pl->getStripCode();
       if(itr==fullDefPatterns.begin()){//first pattern, we simply copy the last bits
-	for(int j=0;j<r;j++){
-	  bits[j]=((last_bits>>(r-j-1)))&(0x1);
+	for(int j=0;j<r[i];j++){
+	  bits[j]=((last_bits>>(r[i]-j-1)))&(0x1);
 	}
       }
       else{//this is not the first pattern: if we have a different bit we set the DC value to don't care
-	for(int j=0;j<r;j++){
-	  if(bits[j]!=((last_bits>>(r-j-1))&(0x1)))
+	for(int j=0;j<r[i];j++){
+	  if(bits[j]!=((last_bits>>(r[i]-j-1))&(0x1)))
 	    bits[j]=2;
 	}
       }
@@ -183,4 +187,12 @@ bool PatternTrunk::checkPattern(Pattern* hp){
   else{
     return lowDefPattern->contains(hp);
   }
+}
+
+void PatternTrunk::setOrderInChip(int i){
+  lowDefPattern->setOrderInChip(i);
+}
+
+int PatternTrunk::getOrderInChip() const{
+  return lowDefPattern->getOrderInChip();
 }

@@ -32,6 +32,7 @@
 <use name="clhep"/>
 <use name="xerces-c"/>
 <use name="boost"/>
+<use name="eigen"/>
 <use name="root"/>
 <use name="rootrflx"/>
 <use name="rootgpad"/>

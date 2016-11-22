@@ -5,7 +5,11 @@
 #include <fstream>
 #include <TChain.h>
 #include <TFile.h>
+#include <TROOT.h>
+#include <memory>
 #include "SectorTree.h"
+#include "LocalToGlobalConverter.h"
+#include "LinearizedTrackFitter.h"
 
 #ifdef IPNL_USE_CUDA
 #include "gpu.h"
@@ -18,14 +22,15 @@ using namespace std;
 **/
 class PatternFinder{
  private:
-  int superStripSize;
   int active_threshold;
   int max_nb_missing_hit;
   bool useMissingHits;
+  unsigned int max_road_number;
   SectorTree* sectors;
   string eventsFilename;
   string outputFileName;
   Detector tracker;
+  LocalToGlobalConverter* converter;
 
 #ifdef IPNL_USE_CUDA
   deviceDetector* d_detector;  
@@ -38,18 +43,21 @@ class PatternFinder{
  public:
  /**
      \brief Constructor
-     \param sp Size of a super strip
      \param at The minimum number of hit super strip to activate a pattern
      \param st The SectorTree containing the sectors with their associated patterns
      \param f The name of the file to analyse
      \param of The name of the output file
   **/
-  PatternFinder(int sp, int at, SectorTree* st, string f, string of);
+  PatternFinder(int at, SectorTree* st, string f, string of);
+
+  /**
+     \brief Destructor
+  **/
+  ~PatternFinder();
 
 #ifdef IPNL_USE_CUDA
  /**
      \brief Constructor
-     \param sp Size of a super strip
      \param at The minimum number of hit super strip to activate a pattern
      \param st The SectorTree containing the sectors with their associated patterns
      \param f The name of the file to analyse
@@ -58,7 +66,8 @@ class PatternFinder{
      \param d The device detector
      \param d_p Structure containing device addresses where parameters are stored
   **/
-  PatternFinder(int sp, int at, SectorTree* st, string f, string of, patternBank* p, deviceDetector* d, deviceParameters* dp);
+  PatternFinder(int at, SectorTree* st, string f, string of, patternBank* p, deviceDetector* d, deviceParameters* dp);
+
 
   /**
      \brief Get active patterns from list of hits (public for CMSSW).
@@ -72,6 +81,12 @@ class PatternFinder{
      \param s The SectorTree containing the sectors with their associated patterns
   **/
   void setSectorTree(SectorTree* s);
+
+  /**
+     \brief Set the maximum output road number
+     \param m The number of active roads will be limited to the first m patterns (ordered by popularity)
+  **/
+  void setMaxRoadNumber(unsigned int m);
 
   /**
      \brief Set the name of the root file containing events
@@ -100,21 +115,10 @@ class PatternFinder{
   vector<Sector*> find(vector<Hit*> hits);
 
   /**
-     \brief Merge 2 files into 1 single file
-  **/
-  static void mergeFiles(string outputFile, string inputFile1, string inputFile2);
-
-  /**
-     \brief Display all the stubs of events as superstrips
-     \param start The search will start from this event number
-     \param stop The search will end at this event number
+     \brief Control the output level
+     \param m If set to True, all stub's superstrip values will be displayed during the pattern recognition process.
    **/
-  void displayEventsSuperstrips(int start, int& stop);
-  /**
-    \brief Display the given hits as superstrips if they are part of the sector. Each line will contain the layer ID followed by the 16 bits of the superstrip as an integer.
-    \param hits The list of hits in the event
-  **/
-  void displaySuperstrips(const vector<Hit*> &hits);
+  void setVerboseMode(bool m);
   /**
      \brief Use the maximum missing hit threshold instead of the active_threshold
    **/

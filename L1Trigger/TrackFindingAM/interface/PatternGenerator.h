@@ -20,8 +20,9 @@ using namespace std;
 **/
 class PatternGenerator{
  private:
-  int superStripSize;
-  int variableRes; // number of DC bits used
+  map<int,int> variableRes; // number of DC bits used for each layer
+  bool variableRes_state_cache;
+  bool cache_is_uptodate;
   float ptMin;
   float ptMax;
   float etaMin;
@@ -52,15 +53,9 @@ class PatternGenerator{
  public:
  /**
      \brief Constructor
-     \param sp Size of a super strip
   **/
-  PatternGenerator(int sp);
+  PatternGenerator();
 
-  /**
-     \brief Change the super strip size
-     \param sp Size of a super strip
-  **/
-  void setSuperStripSize(int sp);
   /**
      \brief Change the minimum PT accepted to create a pattern (default is 2)
      \param minp The minimum PT in GeV/c
@@ -104,13 +99,14 @@ class PatternGenerator{
   /**
      \brief Set the number of DC bits used (0 to 3). If 0, adaptative patterns are not used
      \param nb The number of DC bits to use
+     \param l The ID of the layer (0 by default)
    **/
-  void setVariableResolution(int nb);
+  void setVariableResolution(int nb, int l=0);
   /**
      \brief Is the variable resolutions pattern system activated
      \return True if activated
   **/
-  int getVariableResolutionState();
+  bool getVariableResolutionState();
   /**
      \brief Generates the patterns
      \param sectors This structure contains the interesting sectors, patterns will be added to this structure

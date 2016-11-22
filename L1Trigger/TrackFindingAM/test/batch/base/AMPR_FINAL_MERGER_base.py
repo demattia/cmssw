@@ -12,7 +12,7 @@
 # Author: S.Viret (viret@in2p3.fr)
 # Date        : 17/02/2014
 #
-# Script tested with release CMSSW_6_2_0_SLHC14
+# Script tested with release CMSSW_6_2_0_SLHC27
 #
 #########################
 
@@ -61,7 +61,7 @@ process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
 # For the moment need to explicitely keep the following containers
 # (not yet in the customizing scripts)
 
-process.RAWSIMoutput.outputCommands.append('drop  *_*_*_AMPRBASE')
+process.RAWSIMoutput.outputCommands.append('drop  *_*_*_AMPRBASE*')
 process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMPR')
 process.RAWSIMoutput.outputCommands.append('keep  *_*_MergedTrackTruth_*')
 

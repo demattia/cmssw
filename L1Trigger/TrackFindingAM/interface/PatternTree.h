@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include "PatternTrunk.h"
+#include "CMSPatternLayer.h"
 
 using namespace std;
 /**
@@ -58,10 +59,8 @@ class PatternTree{
   /**
      \brief Link all patterns to the detector structure
      \param d The detector
-     \param sec The ladders in the sector (one vector per layer)
-     \param modules The modules in the sector (one vector per ladder)
   **/
-  void link(Detector& d, const vector< vector<int> >& sec, const vector<map<int, vector<int> > >& modules);
+  void link(Detector& d);
 #ifdef IPNL_USE_CUDA
   /**
      \brief Link all patterns to the detector structure
@@ -81,16 +80,16 @@ class PatternTree{
   void getActivePatterns(int active_threshold, vector<GradedPattern*>& active_patterns);
   /**
      \brief Returns a vector of copies of the active patterns
-     \brief max_nb_missing_hit The maximum number of non active layers to activate the pattern
+     \param max_nb_missing_hit The maximum number of non active layers to activate the pattern
      \param active_threshold The minimum number of hit super strips to activate the pattern
      \return A vector containing copies of active patterns
   **/
   void getActivePatternsUsingMissingHit(int max_nb_missing_hit, int active_threshold, vector<GradedPattern*>& active_patterns);
   /**
      \brief Replace all LD patterns with adapatative patterns. All FD patterns are removed.
-     \param r The number of DC bits used between FD and LD
+     \param r The number of DC bits used between FD and LD for each layer
   **/
-  void computeAdaptativePatterns(short r);
+  void computeAdaptativePatterns(vector<int> r);
   /**
      \brief Add all LD patterns coming from an other PatternTree
      \param p The PatternTree containing the patterns to add
@@ -112,6 +111,12 @@ class PatternTree{
    **/
   void switchToVector();
 
+  /**
+     \brief Delete the least used patterns to match the given pattern number
+     \param nbPatterns The number of patterns to keep
+  **/
+  void truncate(int nbPatterns, vector<unsigned int> defective_patterns=vector<unsigned int>());
+
  private:
   map<string, PatternTrunk*> patterns;
   vector<PatternTrunk*> v_patterns;
@@ -121,7 +126,6 @@ class PatternTree{
      \param ldp The pattern to add
   **/
   void addPatternForMerging(GradedPattern* ldp);
-
   /**
      \brief Update the internal map and clear the internal vector
   **/
@@ -130,13 +134,52 @@ class PatternTree{
   friend class boost::serialization::access;
  
   template<class Archive> void save(Archive & ar, const unsigned int version) const{
+    ar << CMSPatternLayer::MOD_START_BIT;
+    ar << CMSPatternLayer::PHI_START_BIT;
+    ar << CMSPatternLayer::STRIP_START_BIT;
+    ar << CMSPatternLayer::SEG_START_BIT;
+    ar << CMSPatternLayer::MOD_MASK;
+    ar << CMSPatternLayer::PHI_MASK;
+    ar << CMSPatternLayer::STRIP_MASK;
+    ar << CMSPatternLayer::SEG_MASK;
+    ar << CMSPatternLayer::OUTER_LAYER_SEG_DIVIDE;
+    ar << CMSPatternLayer::INNER_LAYER_SEG_DIVIDE;
+
     ar << patterns;
   }
   
   template<class Archive> void load(Archive & ar, const unsigned int version){
+    if(version>0){//The format of the pattern is contained in the file
+      ar >> CMSPatternLayer::MOD_START_BIT;
+      ar >> CMSPatternLayer::PHI_START_BIT;
+      ar >> CMSPatternLayer::STRIP_START_BIT;
+      ar >> CMSPatternLayer::SEG_START_BIT;
+      
+      ar >> CMSPatternLayer::MOD_MASK;
+      ar >> CMSPatternLayer::PHI_MASK;
+      ar >> CMSPatternLayer::STRIP_MASK;
+      ar >> CMSPatternLayer::SEG_MASK;
+      ar >> CMSPatternLayer::OUTER_LAYER_SEG_DIVIDE;
+      ar >> CMSPatternLayer::INNER_LAYER_SEG_DIVIDE;
+    }
+    else{//we use the old values for retro compatibility
+      CMSPatternLayer::MOD_START_BIT = 11;
+      CMSPatternLayer::PHI_START_BIT = 7;
+      CMSPatternLayer::STRIP_START_BIT = 1;
+      CMSPatternLayer::SEG_START_BIT = 0;
+      CMSPatternLayer::MOD_MASK = 0x1F;
+      CMSPatternLayer::PHI_MASK = 0xF;
+      CMSPatternLayer::STRIP_MASK = 0x3F;
+      CMSPatternLayer::SEG_MASK = 0x1;
+      CMSPatternLayer::OUTER_LAYER_SEG_DIVIDE = 1;
+      CMSPatternLayer::INNER_LAYER_SEG_DIVIDE = 1;
+    }
     ar >> patterns;
   }
   
   BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
+bool comparePatterns(PatternTrunk* p1, PatternTrunk* p2);
+bool comparePatternsbyPT(PatternTrunk* p1, PatternTrunk* p2);
+BOOST_CLASS_VERSION(PatternTree, 1)
 #endif

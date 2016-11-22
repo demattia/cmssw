@@ -59,6 +59,7 @@ class TTTrackAssociationMap
 
     /// MC Truth methods
     bool isGenuine( edm::Ptr< TTTrack< T > > aTrack ) const;
+    bool isLooselyGenuine( edm::Ptr< TTTrack< T > > aTrack ) const;
     bool isCombinatoric( edm::Ptr< TTTrack< T > > aTrack ) const;
     bool isUnknown( edm::Ptr< TTTrack< T > > aTrack ) const;
 
@@ -121,7 +122,7 @@ std::vector< edm::Ptr< TTTrack< T > > > TTTrackAssociationMap< T >::findTTTrackP
 
 /// MC truth
 template< typename T >
-bool TTTrackAssociationMap< T >::isGenuine( edm::Ptr< TTTrack< T > > aTrack ) const
+bool TTTrackAssociationMap< T >::isLooselyGenuine( edm::Ptr< TTTrack< T > > aTrack ) const
 {
   /// Check if there is a TrackingParticle
   if ( (this->findTrackingParticlePtr( aTrack )).isNull() )
@@ -130,11 +131,39 @@ bool TTTrackAssociationMap< T >::isGenuine( edm::Ptr< TTTrack< T > > aTrack ) co
   return true;
 }
 
+/// MC truth
+template< typename T >
+bool TTTrackAssociationMap< T >::isGenuine( edm::Ptr< TTTrack< T > > aTrack ) const
+{
+  /// Check if there is a TrackingParticle
+  if ( (this->findTrackingParticlePtr( aTrack )).isNull() )
+    return false;
+
+  /// Get all the stubs from this TrackingParticle
+  std::vector< edm::Ref< edmNew::DetSetVector< TTStub< T > >, TTStub< T > > > TP_Stubs = theStubAssociationMap->findTTStubRefs( this->findTrackingParticlePtr( aTrack ) );
+  std::vector< edm::Ref< edmNew::DetSetVector< TTStub< T > >, TTStub< T > > > TRK_Stubs = aTrack->getStubRefs();
+ 
+  for ( unsigned int js = 0; js < TRK_Stubs.size(); js++ )
+  {
+    /// We want that all the stubs of the track are included in the container of
+    /// all the stubs produced by this particular TrackingParticle which we
+    /// already know is one of the TrackingParticles that released hits
+    /// in this track we are evaluating right now
+    if ( std::find( TP_Stubs.begin(), TP_Stubs.end(), TRK_Stubs.at(js) ) == TP_Stubs.end() )
+      {
+	return false;
+      }
+  }
+
+  return true;
+}
+
+
 template< typename T >
 bool TTTrackAssociationMap< T >::isCombinatoric( edm::Ptr< TTTrack< T > > aTrack ) const
 {
   /// Defined by exclusion
-  if ( this->isGenuine( aTrack ) )
+  if ( this->isLooselyGenuine( aTrack ) )
     return false;
 
   if ( this->isUnknown( aTrack ) )
@@ -146,13 +175,16 @@ bool TTTrackAssociationMap< T >::isCombinatoric( edm::Ptr< TTTrack< T > > aTrack
 template< typename T >
 bool TTTrackAssociationMap< T >::isUnknown( edm::Ptr< TTTrack< T > > aTrack ) const
 {
-  /// UNKNOWN means that all stubs are unknown
+  /// UNKNOWN means that more than 2 stubs are unknown
+  int unknownstubs=0;
+
   std::vector< edm::Ref< edmNew::DetSetVector< TTStub< T > >, TTStub< T > > > theseStubs = aTrack->getStubRefs();
   for ( unsigned int i = 0; i < theseStubs.size(); i++ )
   {
     if ( theStubAssociationMap->isUnknown( theseStubs.at(i) ) == false )
     {
-      return false;
+      ++unknownstubs;
+      if (unknownstubs>=2) return false;
     }
   }
 

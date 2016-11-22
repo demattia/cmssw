@@ -1,10 +1,11 @@
 #include "../interface/Layer.h"
 
-Layer::Layer(int nbLad, int nbMod, int segmentSize, int sstripSize){
+Layer::Layer(int nbLad, int nbMod, int nbSeg, int segmentSize, int sstripSize, bool isBarrel){
   for(int i=0;i<nbLad;i++){
-    Ladder* l = new Ladder(nbMod, segmentSize, sstripSize);
+    Ladder* l = new Ladder(nbMod, nbSeg, segmentSize, sstripSize);
     ladders.push_back(l);
   }
+  isBarrelLayer = isBarrel;
 }
 
 Layer::~Layer(){
@@ -25,4 +26,9 @@ void Layer::clear(){
   for(unsigned int i=0;i<ladders.size();i++){
     ladders[i]->clear();
   }
+}
+
+
+bool Layer::isBarrel(){
+  return isBarrelLayer;
 }

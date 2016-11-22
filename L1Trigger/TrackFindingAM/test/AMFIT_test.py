@@ -1,30 +1,25 @@
 #########################
 #
-# Configuration file for L1 hough fit
-# using a file with AMPR content 
+# Configuration file for L1 PCA fit
+# using a file with AMTC output 
 #
 # This script works on any official production sample
 # (assuming that this sample contains a container of TTStubs,
 # a container of TTClusters, and a container of TrackingParticles)
 #
-# And of course, a container of patterns.... (TTTracks) 
+# And of course, a container of TCs.... (TTTracks) 
 #
-# Instruction to run this script are provided on this page:
-#
-# http://sviret.web.cern.ch/sviret/Welcome.php?n=CMS.HLLHCTuto
-#
-# Look at STEP VI
 #
 # Author: S.Viret (viret@in2p3.fr)
-# Date        : 20/02/2014
+# Date        : 04/03/2016
 #
-# Script tested with release CMSSW_6_2_0_SLHC14
+# Script tested with release CMSSW_6_2_0_SLHC27
 #
 #########################
 
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process('AMFIT')
+process = cms.Process('AMFIT2')
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
@@ -44,13 +39,14 @@ process.maxEvents = cms.untracked.PSet(
 
 # Input source
 #
-# You can use as input file the result of the script AMPR_test.py of part 5.2.2 of the tutorial
+# You can use as input file the result of the script AMTC_test.py of part 6.1.2 of the tutorial
 #
-# Any other EDM file containing patterns and produced with CMSSW 620_SLHC13 should also work
+# Any other EDM file containing TCs and produced with CMSSW 620_SLHC27 should also work
 #
 
 process.source = cms.Source("PoolSource",
-                            fileNames = cms.untracked.vstring('file:AM_output.root'),
+                            # fileNames = cms.untracked.vstring('file:/fdata/hepx/store/user/demattia/Seb/CMSSW_6_2_0_SLHC27/src/PU200_TTBAR_TC.root'),
+                            fileNames = cms.untracked.vstring('file:/home/demattia/Seb/CMSSW_6_2_0_SLHC27/src/L1Trigger/TrackFindingAM/test/TC_crash_in.root'),
                             duplicateCheckMode = cms.untracked.string( 'noDuplicateCheck' )
 )
 
@@ -59,6 +55,9 @@ process.source = cms.Source("PoolSource",
 
 process.TTStubAssociatorFromPixelDigis.TTStubs        = cms.VInputTag( cms.InputTag("MergeFITOutput", "StubInTrack"))
 process.TTStubAssociatorFromPixelDigis.TTClusterTruth = cms.VInputTag( cms.InputTag("TTClusterAssociatorFromPixelDigis","ClusterAccepted"))
+process.TTTrackAssociatorFromPixelDigis.TTTracks      = cms.VInputTag( cms.InputTag("MergeFITOutput", "AML1Tracks"))
+
+process.TTTracksTAMUFromTC.ConstantsDir               = cms.FileInPath("L1Trigger/TrackFindingAM/data/PreEstimate_Transverse/matrixVD_2016.txt")
 
 # Additional output definition
 from Configuration.AlCa.GlobalTag import GlobalTag
@@ -80,14 +79,16 @@ process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
 
 # Keep the PR output
 process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMPR')
+# process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMTC')
+process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMTCBASE')
 
 # Keep the FIT output
-process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMFIT')
-process.RAWSIMoutput.outputCommands.append('drop *_TTTracksFromPattern_*_*')
+process.RAWSIMoutput.outputCommands.append('keep  *_*_*_AMFIT2')
+process.RAWSIMoutput.outputCommands.append('drop *_TTTracks*FromTC_*_*')
 process.RAWSIMoutput.outputCommands.append('keep  *_*_MergedTrackTruth_*')
 
 # Path and EndPath definitions
-process.L1AMFIT_step         = cms.Path(process.TTTracksFromPatternswStubs)
+process.L1AMFIT_step         = cms.Path(process.TTTracksFromTCswStubs)
 process.endjob_step          = cms.EndPath(process.endOfProcess)
 process.RAWSIMoutput_step    = cms.EndPath(process.RAWSIMoutput)
 

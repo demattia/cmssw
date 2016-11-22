@@ -14,7 +14,7 @@ class Hit{
   char ladder;
   char zPos;
   char segment;
-  short stripNumber;
+  float stripNumber;
   int stub_idx;
   int part_id;
   float part_pt;
@@ -27,7 +27,7 @@ class Hit{
   float X0;
   float Y0;
   float Z0;
-
+  float bend;
   
 
  public :
@@ -50,8 +50,9 @@ class Hit{
      \param p_x0 The X0 coordinate of the hit in the tracker
      \param p_y0 The Y0 coordinate of the hit in the tracker
      \param p_z0 The Z0 coordinate of the hit in the tracker
+     \param p_b The bend of the stub (difference between the clusters) in number of strips
   **/
-  Hit(char l, char lad, char zp, char seg, short strip, int idx, int tp, float pt, float ip, float eta, float phi0, float p_x, float p_y, float p_z, float p_x0, float p_y0, float p_z0);
+  Hit(char l, char lad, char zp, char seg, float strip, int idx, int tp, float pt, float ip, float eta, float phi0, float p_x, float p_y, float p_z, float p_x0, float p_y0, float p_z0, float p_b=0);
   /**
      \brief The copy Constructor
   **/
@@ -81,6 +82,11 @@ class Hit{
      \return The strip of the Hit
   **/
   short getStripNumber() const;
+  /**
+     \brief Get the strip position of the hit in demi-strip resolution
+     \return The strip of the Hit
+  **/
+  float getHDStripNumber() const;
   /**
      \brief Get the ID of the hit in the event
      \return The ID of the Hit
@@ -141,6 +147,21 @@ class Hit{
      \return The value as a float
   **/
   float getZ0() const;
+  /**
+     \brief Get the bend of the hit
+     \return The value as a float (may be half a strip)
+  **/
+  float getBend() const;
+  /**
+     \brief Get the polar angle of the hit
+     \return The polar angle value (in radian)
+  **/
+  float getPolarPhi() const;
+  /**
+     \brief Get the polar distance of the hit
+     \return The polar distance value
+  **/
+  float getPolarDistance() const;
 
 
   /**
