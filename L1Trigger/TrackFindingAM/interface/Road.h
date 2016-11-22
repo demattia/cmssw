@@ -25,6 +25,7 @@ class Road
   std::vector<std::vector<Stub> >::const_iterator endLayer() const { return stubs_.end(); }
   std::size_t stubsNum(const std::size_t & layer) const { return stubs_.at(layer).size(); }
   Stub getStub(const std::size_t & layer, const int count) const { return stubs_.at(layer).at(count); }
+  std::vector<std::vector<Stub> > getStubs() { return stubs_; }
 
  private:
   int maxStubsPerLayer_;

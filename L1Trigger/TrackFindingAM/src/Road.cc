@@ -49,7 +49,7 @@ Road::Road(const std::vector<Hit*> & stubs) :
       double phi = std::atan2(h->getY(), h->getX());
       double R = std::sqrt(h->getX()*h->getX() + h->getY()*h->getY());
       // std::cout << "filling stub with phi = " << phi << ", R = " << R << std::endl;
-      stubs.push_back(Stub(phi, R, h->getZ(), s.first, h->getStripNumber(), h->getID()));
+      stubs.push_back(Stub(phi, R, h->getZ(), s.first, h->getStripNumber(), h->getID(), h->getLadder()+1, h->getBend()));
       // std::cout << "filled stub" << std::endl;
     }
     stubs_.push_back(stubs);

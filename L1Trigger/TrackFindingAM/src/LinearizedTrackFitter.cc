@@ -16,8 +16,8 @@ LinearizedTrackFitter::LinearizedTrackFitter(const std::string & baseDir, const 
                               linearFitLowPtDirName, linearFitHighPtDirName, linearFitLongitudinalDirName,
                               alignPrincipals),
     preEstimatedPt_(0.),
-    cuts6Low_{-1., 50., 40., 25., -1., -1., -1, 3, 3., 3., -1., -1.},
-    cuts6High_{-1., 50., 45., 50., -1., -1., -1, 3.5, 3., 3., -1., -1.}
+    cuts6Low_{-1., 45., 35., 25., -1., -1., -1, 3., 3., 3., -1., -1.},
+    cuts6High_{-1., 55., 45., 40., -1., -1., -1, 3., 3., 3., -1., -1.}
 {
   // Fill all pre-estimates
   fillMatrices(preEstimatePtDirName_, "matrixVD_0_pre_chargeOverPt.txt", &chargeOverPtEstimator_);

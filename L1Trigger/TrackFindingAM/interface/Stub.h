@@ -13,6 +13,10 @@ class Stub
       phi_(phi), R_(R), z_(z), layer_(layer), strip_(strip)
   {}
 
+  Stub(const double & phi, const double & R, const double & z, const int layer, const int strip, const unsigned int stubRef, const int ring, const float DeltaS) :
+      phi_(phi), R_(R), z_(z), layer_(layer), strip_(strip), stubRef_(stubRef), ring_(ring), DeltaS_(DeltaS)
+  {}
+
   Stub(const double & phi, const double & R, const double & z, const int layer, const int strip,
        const unsigned int stubRef) :
       phi_(phi), R_(R), z_(z), layer_(layer), strip_(strip), stubRef_(stubRef)
@@ -28,6 +32,8 @@ class Stub
   int layer() const { return layer_; }
   float strip() const { return strip_; }
   unsigned int stubRef() const { return stubRef_; }
+  unsigned ring() const {return ring_; }
+  float DeltaS() const {return DeltaS_; }
 
  private:
   double phi_;
@@ -37,6 +43,8 @@ class Stub
   float strip_;
   // Only needed for the CombinationBuilder
   unsigned int stubRef_;
+  unsigned ring_;
+  float DeltaS_;
 };
 
 
